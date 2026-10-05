@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import {
   Search,
   Link2,
@@ -5,13 +6,14 @@ import {
   ChevronRight,
   ArrowUpRight,
 } from 'lucide-react'
+
 import type { MusicSong } from '#music'
-import { useState } from 'react'
 import type { FavoriteSong } from '#lib/music-favorites'
 import { MusicSongRow } from '#components/netease/MusicSongRow'
 import { Button } from '#components/ui/button'
 import { Input } from '#components/ui/input'
 import { ScrollArea } from '#components/ui/scroll-area'
+import { Tabs, TabsList, TabsTab, TabsPanel } from '#components/ui/tabs'
 import { cn } from '#lib/utils'
 
 interface MusicLibraryPanelProps {
@@ -64,7 +66,13 @@ export function MusicLibraryPanel({
   const [view, setView] = useState<'search' | 'favorites'>('search')
   const favoriteIds = new Set(favorites.map((song) => song.id))
   return (
-    <div className={cn('flex min-h-0 flex-col border-r', className)}>
+    <Tabs
+      value={view}
+      onValueChange={(value) => {
+        if (value === 'search' || value === 'favorites') setView(value)
+      }}
+      className={cn('min-h-0 gap-0 border-r', className)}
+    >
       <div className="space-y-4 border-b p-5">
         <div className="flex items-center justify-between">
           <div>
@@ -138,26 +146,13 @@ export function MusicLibraryPanel({
             </Button>
           )}
         </p>
-        <div
-          className="flex gap-1 rounded-lg bg-muted p-1"
-          aria-label="曲库视图"
-        >
+        <TabsList className="w-full" aria-label="曲库视图">
           {(['search', 'favorites'] as const).map((tab) => (
-            <Button
-              key={tab}
-              variant="ghost"
-              size="sm"
-              aria-pressed={view === tab}
-              onClick={() => setView(tab)}
-              className={cn(
-                'flex-1 text-xs',
-                view === tab && 'bg-background text-primary shadow-sm',
-              )}
-            >
+            <TabsTab key={tab} value={tab}>
               {tab === 'search' ? '搜索结果' : `我的收藏 · ${favorites.length}`}
-            </Button>
+            </TabsTab>
           ))}
-        </div>
+        </TabsList>
         {(favoritesError || error) && (
           <p role="alert" className="text-xs leading-5 text-destructive">
             {favoritesError || error}
@@ -169,104 +164,106 @@ export function MusicLibraryPanel({
           </p>
         )}
       </div>
-      <ScrollArea className="flex-1" scrollFade>
-        <div className="p-3">
-          {view === 'search' && searched && (
-            <p className="px-2 pt-2 pb-3 text-xs text-muted-foreground">
-              “{searched}” · {total} 首结果
-            </p>
-          )}
-          {view === 'search'
-            ? songs.map((song) => (
-                <MusicSongRow
-                  key={song.id}
-                  song={song}
-                  selected={selectedId === song.id}
-                  playing={playing}
-                  favorite={favoriteIds.has(song.id)}
-                  onSelect={() => onSelect(song)}
-                  onFavorite={() => onFavorite(song)}
-                />
-              ))
-            : favorites.map((song) => (
-                <MusicSongRow
-                  key={song.id}
-                  song={song}
-                  selected={selectedId === song.id}
-                  playing={playing}
-                  favorite
-                  onSelect={() => onSelectFavorite(song)}
-                  onFavorite={() => onFavorite(song)}
-                />
-              ))}
-          {view === 'favorites' && !favorites.length && (
-            <div className="px-3 py-8 text-sm leading-7 text-muted-foreground">
-              还没有收藏歌曲。点击搜索结果旁的爱心，把喜欢的歌留到下次练习。
-            </div>
-          )}
-          {view === 'search' && !songs.length && (
-            <div className="px-3 py-8">
-              <span className="flex size-10 items-center justify-center rounded-xl bg-primary/8 text-primary">
-                <Search className="size-5" />
-              </span>
-              <h3 className="mt-5 text-sm font-semibold">
-                {searched ? '还没有找到这首歌' : '今天，想唱哪首歌？'}
-              </h3>
-              <p className="mt-2 text-xs leading-6 text-muted-foreground">
-                {searched
-                  ? '试试更短的歌名，或搜索歌手。'
-                  : '从熟悉的旋律开始，一句一句积累日语。'}
+      <TabsPanel value={view} className="flex min-h-0 flex-col">
+        <ScrollArea className="flex-1" scrollFade>
+          <div className="p-3">
+            {view === 'search' && searched && (
+              <p className="px-2 pt-2 pb-3 text-xs text-muted-foreground">
+                “{searched}” · {total} 首结果
               </p>
-              {!searched && (
-                <div className="mt-5 flex flex-wrap gap-2">
-                  {['spiral', '米津玄師', 'ヨルシカ'].map((keyword) => (
-                    <Button
-                      key={keyword}
-                      variant="outline"
-                      size="sm"
-                      className="rounded-full text-xs"
-                      disabled={!loggedIn || busy}
-                      onClick={() => {
-                        onQueryChange(keyword)
-                        onSearch(keyword)
-                      }}
-                    >
-                      {keyword}
-                    </Button>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      </ScrollArea>
-      {view === 'search' && songs.length > 0 && (
-        <div className="flex items-center justify-between border-t px-5 py-3 text-xs text-muted-foreground">
-          <span>
-            {offset + 1}–{offset + songs.length} / {total}
-          </span>
-          <div className="flex gap-1">
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              aria-label="上一页"
-              disabled={busy || offset === 0}
-              onClick={() => onSearch(searched, Math.max(0, offset - 12))}
-            >
-              <ChevronLeft />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              aria-label="下一页"
-              disabled={busy || offset + songs.length >= total}
-              onClick={() => onSearch(searched, offset + 12)}
-            >
-              <ChevronRight />
-            </Button>
+            )}
+            {view === 'search'
+              ? songs.map((song) => (
+                  <MusicSongRow
+                    key={song.id}
+                    song={song}
+                    selected={selectedId === song.id}
+                    playing={playing}
+                    favorite={favoriteIds.has(song.id)}
+                    onSelect={() => onSelect(song)}
+                    onFavorite={() => onFavorite(song)}
+                  />
+                ))
+              : favorites.map((song) => (
+                  <MusicSongRow
+                    key={song.id}
+                    song={song}
+                    selected={selectedId === song.id}
+                    playing={playing}
+                    favorite
+                    onSelect={() => onSelectFavorite(song)}
+                    onFavorite={() => onFavorite(song)}
+                  />
+                ))}
+            {view === 'favorites' && !favorites.length && (
+              <div className="px-3 py-8 text-sm leading-7 text-muted-foreground">
+                还没有收藏歌曲。点击搜索结果旁的爱心，把喜欢的歌留到下次练习。
+              </div>
+            )}
+            {view === 'search' && !songs.length && (
+              <div className="px-3 py-8">
+                <span className="flex size-10 items-center justify-center rounded-xl bg-primary/8 text-primary">
+                  <Search className="size-5" />
+                </span>
+                <h3 className="mt-5 text-sm font-semibold">
+                  {searched ? '还没有找到这首歌' : '今天，想唱哪首歌？'}
+                </h3>
+                <p className="mt-2 text-xs leading-6 text-muted-foreground">
+                  {searched
+                    ? '试试更短的歌名，或搜索歌手。'
+                    : '从熟悉的旋律开始，一句一句积累日语。'}
+                </p>
+                {!searched && (
+                  <div className="mt-5 flex flex-wrap gap-2">
+                    {['spiral', '米津玄師', 'ヨルシカ'].map((keyword) => (
+                      <Button
+                        key={keyword}
+                        variant="outline"
+                        size="sm"
+                        className="rounded-full text-xs"
+                        disabled={!loggedIn || busy}
+                        onClick={() => {
+                          onQueryChange(keyword)
+                          onSearch(keyword)
+                        }}
+                      >
+                        {keyword}
+                      </Button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
-        </div>
-      )}
-    </div>
+        </ScrollArea>
+        {view === 'search' && songs.length > 0 && (
+          <div className="flex items-center justify-between border-t px-5 py-3 text-xs text-muted-foreground">
+            <span>
+              {offset + 1}–{offset + songs.length} / {total}
+            </span>
+            <div className="flex gap-1">
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                aria-label="上一页"
+                disabled={busy || offset === 0}
+                onClick={() => onSearch(searched, Math.max(0, offset - 12))}
+              >
+                <ChevronLeft />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                aria-label="下一页"
+                disabled={busy || offset + songs.length >= total}
+                onClick={() => onSearch(searched, offset + 12)}
+              >
+                <ChevronRight />
+              </Button>
+            </div>
+          </div>
+        )}
+      </TabsPanel>
+    </Tabs>
   )
 }

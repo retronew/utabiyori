@@ -91,10 +91,6 @@
   a {
     -webkit-tap-highlight-color: transparent;
   }
-  button:not(:disabled),
-  [role='button']:not([aria-disabled='true']) {
-    cursor: pointer;
-  }
   a {
     @apply outline-none focus-visible:ring-2 focus-visible:ring-ring;
   }
@@ -120,14 +116,14 @@
   }
 }
 
-@keyframes music-drift {
+@keyframes music-flow {
   0% {
-    transform: translate(-3%, -4%) rotate(-12deg) scale(1.05);
+    transform: translate(-18%, -12%) rotate(-24deg) scale(1.05);
   }
   50% {
-    transform: translate(5%, 3%) rotate(8deg) scale(1.2);
+    transform: translate(22%, 16%) rotate(18deg) scale(1.25);
   }
   100% {
-    transform: translate(-2%, 6%) rotate(20deg) scale(1.1);
+    transform: translate(-8%, 26%) rotate(42deg) scale(0.95);
   }
 }

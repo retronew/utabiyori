@@ -24,6 +24,9 @@ importers:
 
   apps/api:
     dependencies:
+      '@jp-learn/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
       '@neteasecloudmusicapienhanced/api':
         specifier: 4.41.0
         version: 4.41.0(debug@4.4.3(supports-color@5.5.0))(supports-color@5.5.0)

@@ -1,5 +1,6 @@
 import { randomBytes } from 'node:crypto'
 import type { IncomingMessage, ServerResponse } from 'node:http'
+import { parseWordLyrics } from '@jp-learn/shared'
 import { call, configured, MusicError } from '#client'
 import type { Environment } from '#client'
 import { seal, token, unseal } from '#session'
@@ -362,12 +363,30 @@ export default async function handle(
     if (action === 'lyrics') {
       const result = await invoke(`${path}/song/lyric/get/v2`, { songId: id })
       const data = result.data!
+      let words: Record<string, unknown> | null | undefined
+      let wordTiming: 'missing' | 'restricted' | 'unavailable' = 'missing'
+      try {
+        words = (
+          await invoke(`${path}/song/lyric/word/by/word/get`, { songId: id })
+        ).data
+      } catch (error) {
+        // Optional word timing must not hide usable lyrics; expired authorization still propagates.
+        if (error instanceof MusicError && error.code === 401) throw error
+        wordTiming =
+          error instanceof MusicError && error.code === 300
+            ? 'restricted'
+            : 'unavailable'
+      }
+      const wordLines = parseWordLyrics(words?.lyrics)
       return send({
         lyric: typeof data.lyric === 'string' ? data.lyric : '',
         translation: typeof data.transLyric === 'string' ? data.transLyric : '',
         romaji: typeof data.romalrc === 'string' ? data.romalrc : '',
         pureMusic: !!data.pureMusic,
         noLyric: !!data.noLyric,
+        wordLines,
+        wordTiming: wordLines.length ? 'available' : wordTiming,
+        wordTranslation: typeof words?.ytlrcs === 'string' ? words.ytlrcs : '',
       })
     }
     if (action === 'playback') {

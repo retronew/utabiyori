@@ -1,8 +1,12 @@
 import { AudioLines, Music2, RefreshCw, Heart } from 'lucide-react'
-import type { MusicSong, TimedLine, MusicPlayback } from '#music'
+
+import type { MusicSong, TimedLine, MusicPlayback, MusicLyrics } from '#music'
+import { getLineRange } from '#lib/music-playback'
 import type { LineRange } from '#lib/music-playback'
 import { Button } from '#components/ui/button'
 import { Switch } from '#components/ui/switch'
+import { Label } from '#components/ui/label'
+import { LyricProgressText } from '#components/netease/LyricProgressText'
 import { ScrollArea } from '#components/ui/scroll-area'
 import { Artwork } from '#components/Artwork'
 import { MusicAtmosphere } from '#components/netease/MusicAtmosphere'
@@ -14,6 +18,9 @@ interface LyricsPanelProps {
   className?: string
   visible: boolean
   playing: boolean
+  current: number
+  readTime: () => number
+  wordTiming?: MusicLyrics['wordTiming']
   favorite: boolean
   onFavorite: () => void
   selected: MusicSong | null
@@ -38,6 +45,9 @@ export function LyricsPanel({
   className,
   visible,
   playing,
+  current,
+  readTime,
+  wordTiming,
   favorite,
   onFavorite,
   selected,
@@ -67,6 +77,11 @@ export function LyricsPanel({
   })
   const focused = lines[lineIndex]
   const range = lineRange(lineIndex)
+  const sweepRange = getLineRange(
+    lines,
+    lineIndex,
+    (selected?.duration ?? 0) / 1000,
+  )
   return (
     <div
       className={cn(
@@ -107,23 +122,39 @@ export function LyricsPanel({
               <Heart className={cn('size-5', favorite && 'fill-current')} />
             </Button>
           </div>
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-y border-white/10 px-6 py-3 text-[11px] text-white/60 xl:px-8">
-            <label className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-y border-white/10 px-6 py-3 text-xs text-white/65 xl:px-8">
+            <Label className="text-white/80">
               <Switch
                 checked={showRomaji}
                 onCheckedChange={onRomajiChange}
                 aria-label="显示罗马音"
               />
               罗马音
-            </label>
-            <label className="flex items-center gap-2">
+            </Label>
+            <Label className="text-white/80">
               <Switch
                 checked={showTranslation}
                 onCheckedChange={onTranslationChange}
                 aria-label="显示翻译"
               />
               翻译
-            </label>
+            </Label>
+            {focused?.text && (
+              <span
+                title={
+                  focused.words?.length
+                    ? '网易云官方提供的逐字时间轴。'
+                    : wordTiming === 'restricted'
+                      ? '当前开放应用未获逐字歌词接口权限，按句级时间轴近似推进。'
+                      : wordTiming === 'unavailable'
+                        ? '逐字歌词暂时无法获取，按句级时间轴近似推进。'
+                        : '歌曲没有可用的逐字时间，按句级时间轴近似推进。'
+                }
+                className="text-[11px]"
+              >
+                {focused.words?.length ? '逐字进度' : '句级近似进度'}
+              </span>
+            )}
             <span className="ml-auto">
               {playback?.trial
                 ? '试听 ' +
@@ -205,13 +236,26 @@ export function LyricsPanel({
                       <span
                         lang="ja"
                         className={cn(
-                          'block text-[28px] leading-[1.5] font-bold tracking-tight transition-[text-shadow,filter] duration-700 md:text-[32px] xl:text-[36px]',
-                          index === lineIndex
-                            ? '[text-shadow:0_0_24px_#ffffff60,0_0_6px_#ffffff30]'
-                            : 'blur-[0.3px] group-hover:blur-none',
+                          'block text-[28px] leading-[1.5] font-bold tracking-tight md:text-[32px] xl:text-[36px]',
+                          index !== lineIndex &&
+                            'blur-[0.3px] group-hover:blur-none',
                         )}
                       >
-                        {line.text}
+                        {index === lineIndex ? (
+                          <LyricProgressText
+                            key={index}
+                            text={line.text}
+                            words={line.words}
+                            start={sweepRange.start}
+                            end={line.end ?? sweepRange.end}
+                            current={current}
+                            playing={playing}
+                            visible={visible}
+                            readTime={readTime}
+                          />
+                        ) : (
+                          line.text
+                        )}
                       </span>
                       {showRomaji && line.romaji && (
                         <span

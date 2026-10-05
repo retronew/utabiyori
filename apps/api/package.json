@@ -13,6 +13,7 @@
     "typescript": "~6.0.2"
   },
   "dependencies": {
+    "@jp-learn/shared": "workspace:*",
     "@neteasecloudmusicapienhanced/api": "4.41.0"
   },
   "imports": {

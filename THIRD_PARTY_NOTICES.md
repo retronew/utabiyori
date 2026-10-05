@@ -2,7 +2,8 @@
 
 ## coss ui
 
-The components in `apps/web/src/components/ui` are adapted from the official
+The components in `apps/web/src/components/ui` and the segmented-control helper
+in `apps/web/src/lib/segmented-control.ts` are adapted from the official
 [coss ui registry](https://coss.com/ui). They use Base UI and Tailwind CSS.
 Imports and slider accessibility labels have been adjusted for this project.
 

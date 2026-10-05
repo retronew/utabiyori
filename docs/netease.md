@@ -4,15 +4,22 @@
 
 ## 数据和音频来源
 
-| 能力                             | 来源                        | 当前应用实测                               |
-| -------------------------------- | --------------------------- | ------------------------------------------ |
-| 匿名登录、二维码授权和状态轮询   | 网易云官方开放平台          | 已通过                                     |
-| 歌曲搜索（含原始 ID 和版权信息） | 官方 `/search/song/get/v3`  | 已通过                                     |
-| 歌词、翻译、罗马音               | 官方 `/song/lyric/get/v2`   | 已通过；附加文本取决于歌曲                 |
-| 官方音频地址                     | 官方 `/song/playurl/get/v2` | 当前应用返回 300：应用未授权当前接口       |
-| 备用音频地址                     | api-enhanced 的网页播放请求 | 已返回音频并实际播放；测试歌曲为 30 秒试听 |
+| 能力                             | 来源                                | 当前应用实测                                  |
+| -------------------------------- | ----------------------------------- | --------------------------------------------- |
+| 匿名登录、二维码授权和状态轮询   | 网易云官方开放平台                  | 已通过                                        |
+| 歌曲搜索（含原始 ID 和版权信息） | 官方 `/search/song/get/v3`          | 已通过                                        |
+| 歌词、翻译、罗马音               | 官方 `/song/lyric/get/v2`           | 已通过；附加文本取决于歌曲                    |
+| 逐字歌词及对应翻译               | 官方 `/song/lyric/word/by/word/get` | 已接入；2026-10-06 当前应用返回 300，尚未授权 |
+| 官方音频地址                     | 官方 `/song/playurl/get/v2`         | 当前应用返回 300：应用未授权当前接口          |
+| 备用音频地址                     | api-enhanced 的网页播放请求         | 已返回音频并实际播放；测试歌曲为 30 秒试听    |
 
 设置 `NETEASE_PLAYBACK_PROVIDER=hybrid` 后，官方接口出现应用权限限制时使用网易云网页播放接口；`official` 则只调用官方播放接口。官方搜索中的 `visible` 代表该开放应用的版权范围，混合模式的音频改按网页接口实际下发的权限判断。
+
+`lyrics` 操作先获取逐行歌词，再尝试官方逐字接口。逐字接口的 `start`、`duration` 和 `suspend` 均为毫秒，`suspend` 是整首歌的绝对时间；服务端校验后统一转换为秒，返回 `wordLines`、`wordTranslation` 和安全的 `wordTiming` 状态。`ytlrcs` 是与逐字时间轴对齐的逐行翻译。逐字数据优先作为歌词时间轴，并按相同文本及邻近时间保留逐行接口的罗马音；没有匹配的附加文本不会生成或错配。
+
+官方说明并非所有歌曲都有逐字歌词，无数据时可能返回 `data: null`。当前应用需在开放平台申请该接口权限，会员资格不能代替开放应用授权。权限不足、无数据或临时请求失败时保留逐行歌词，并在界面标注「句级近似进度」，说明降级原因；授权过期仍按原有重新登录流程处理。没有改用非官方歌词接口。
+
+进度发光通过 `useLyricProgress` 读取播放器原曲时钟，使用官方字 / 词区间进行文字填充，并在已唱过的字符后短暂衰减。一个词含多个字符时，在该词的真实时间区间内推进遮罩；句级降级时才按本句字符数均分时间。支持暂停、定位、倍速和循环，隐藏歌词后停止逐帧绘制。近似显示不能保证与每个音节精确对齐。
 
 官方曲库授权与网页登录是两个独立会话。先扫码连接官方曲库，再点击「扫码连接网页播放」，用网易云 App 确认第二个二维码。备用音频随后使用网页登录账号的会员和购买权限；未连接时仍按游客权限播放。完成网页登录后会自动重试当前歌曲。没有会员、购买权限或受到地区和版权限制的歌曲仍可能无法完整播放。
 
@@ -56,4 +63,4 @@ Root Directory 使用仓库根目录。`api/netease.ts` 是 Node Serverless 入�
 
 `pnpm typecheck`、`pnpm lint`、`pnpm test` 和 `pnpm build` 检查类型、签名、Cookie 防篡改、同源边界、歌曲映射票据及歌词时间轴。真实接口和浏览器验证需要扫码登录，且当地网络、账号与版权范围会影响结果。罗马音和翻译只显示官方提供的文本；没有自动生成假名、翻译或音准评分。
 
-官方文档：[签名](https://music.163.com/st/developer/document?docId=45aac8d12ccb4a98b14e2ea34a1a9cdb)、[公共参数](https://music.163.com/st/developer/document?docId=0f7801d7d6d24180b8fc9058d1ffe593)、[歌曲搜索](https://music.163.com/st/developer/document?docId=b175e0d52550427cbb7cd4735a9de765)、[歌词](https://music.163.com/st/developer/document?docId=803202bd65bc469587d05b507dcd31e7)、[播放地址](https://music.163.com/st/developer/document?docId=3d2c9f695ff24f4ea37611614b7f7856)。
+官方文档：[签名](https://music.163.com/st/developer/document?docId=45aac8d12ccb4a98b14e2ea34a1a9cdb)、[公共参数](https://music.163.com/st/developer/document?docId=0f7801d7d6d24180b8fc9058d1ffe593)、[歌曲搜索](https://music.163.com/st/developer/document?docId=b175e0d52550427cbb7cd4735a9de765)、[歌词](https://music.163.com/st/developer/document?docId=803202bd65bc469587d05b507dcd31e7)、[逐字歌词](https://music.163.com/st/developer/document?docId=ac69c8c9c1b04a7f8704d6ccb78580dc)、[播放地址](https://music.163.com/st/developer/document?docId=3d2c9f695ff24f4ea37611614b7f7856)。

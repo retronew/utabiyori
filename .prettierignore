@@ -2,3 +2,6 @@ node_modules
 dist
 pnpm-lock.yaml
 .artifacts
+# Installed third-party skills retain their upstream formatting.
+.agents/skills
+.claude/skills

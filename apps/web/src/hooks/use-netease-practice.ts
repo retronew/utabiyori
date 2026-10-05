@@ -35,6 +35,7 @@ export function useNeteasePractice() {
   const [notice, setNotice] = useState('')
   const [selected, setSelected] = useState<MusicSong | null>(null)
   const [lines, setLines] = useState<TimedLine[]>([])
+  const [wordTiming, setWordTiming] = useState<MusicLyrics['wordTiming']>()
   const [playback, setPlayback] = useState<MusicPlayback | null>(null)
   const [current, setCurrent] = useState(0)
   const [lineIndex, setLineIndex] = useState(0)
@@ -126,6 +127,7 @@ export function useNeteasePractice() {
     setPlaying(false)
     setSelected(song)
     setLines([])
+    setWordTiming(undefined)
     setPlayback(null)
     setCurrent(0)
     setLineIndex(0)
@@ -146,7 +148,14 @@ export function useNeteasePractice() {
     const [lyric, stream] = results
     if (lyric.status === 'fulfilled') {
       const data = lyric.value
-      const merged = mergeLyrics(data.lyric, data.translation, data.romaji)
+      setWordTiming(data.wordTiming)
+      const merged = mergeLyrics(
+        data.lyric,
+        data.translation,
+        data.romaji,
+        data.wordLines,
+        data.wordTranslation,
+      )
       setLines(merged)
       setNotice(
         data.pureMusic
@@ -427,5 +436,7 @@ export function useNeteasePractice() {
     lineRange,
     mediaProps,
     playerProps,
+    readPlaybackTime: () => audio.current.currentTime,
+    wordTiming,
   }
 }

@@ -1,3 +1,6 @@
+export { parseWordLyrics } from '#word-lyrics'
+export type { TimedWord, WordLyricLine } from '#word-lyrics'
+
 export interface LyricToken {
   text: string
   reading?: string

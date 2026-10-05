@@ -1,3 +1,5 @@
+import type { TimedWord, WordLyricLine } from '@jp-learn/shared'
+
 export interface MusicSong {
   id: string
   ticket: string
@@ -16,6 +18,8 @@ export interface TimedLine {
   text: string
   translation?: string
   romaji?: string
+  words?: TimedWord[]
+  end?: number
 }
 export interface MusicPlayback {
   url: string
@@ -29,6 +33,9 @@ export interface MusicLyrics {
   romaji: string
   pureMusic: boolean
   noLyric: boolean
+  wordLines?: WordLyricLine[]
+  wordTranslation?: string
+  wordTiming?: 'available' | 'missing' | 'restricted' | 'unavailable'
 }
 export interface MusicQr {
   image: string
@@ -71,16 +78,53 @@ export function mergeLyrics(
   lyric: string,
   translation: string,
   romaji: string,
+  wordLines: WordLyricLine[] = [],
+  wordTranslation = '',
 ) {
   const translations = parseLrc(translation),
     romanized = parseLrc(romaji)
   const find = (rows: TimedLine[], time: number) =>
     rows.find((row) => Math.abs(row.time - time) < 0.08)?.text
-  return parseLrc(lyric).map((row) => ({
+  const original = parseLrc(lyric).map((row) => ({
     ...row,
     translation: find(translations, row.time),
     romaji: find(romanized, row.time),
   }))
+  if (!wordLines.length) return original
+  const wordTranslations = parseLrc(wordTranslation)
+  const matched = new Set<TimedLine>()
+  const timed: TimedLine[] = wordLines.map((line) => {
+    const text = line.words.map((word) => word.text).join('')
+    const match = original
+      .filter(
+        (row) =>
+          row.text.replace(/\s/g, '') === text.replace(/\s/g, '') &&
+          Math.abs(row.time - line.start) < 3,
+      )
+      .sort(
+        (a, b) => Math.abs(a.time - line.start) - Math.abs(b.time - line.start),
+      )[0]
+    if (match) matched.add(match)
+    return {
+      time: line.start,
+      end: line.end,
+      text,
+      words: line.words,
+      translation: find(wordTranslations, line.start) ?? match?.translation,
+      romaji: match?.romaji,
+    }
+  })
+  // Preserve silence boundaries without interrupting a word that is still being sung.
+  timed.push(
+    ...original.filter(
+      (row) =>
+        !matched.has(row) &&
+        !wordLines.some(
+          (line) => row.time >= line.start - 0.08 && row.time < line.end,
+        ),
+    ),
+  )
+  return timed.sort((a, b) => a.time - b.time)
 }
 export async function musicRequest<T>(
   body: Record<string, unknown>,
