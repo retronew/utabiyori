@@ -42,6 +42,10 @@
 
 Root Directory 使用仓库根目录。`api/netease.ts` 是 Node Serverless 入口，前端继续输出到 `apps/web/dist`。在 Vercel 的 Environment Variables 中配置与本地相同的服务端变量，再部署。不要上传本地 `.env.local`，也不要把用户登录 token 配置成全站共享变量。
 
+根目录提供 TypeScript 和 Node 类型依赖，以及供 Vercel 函数编译使用的 `tsconfig.json`。其中 `rewriteRelativeImportExtensions` 将服务端源码的 `.ts` 相对引用改成部署产物的 `.js` 引用，避免函数启动时找不到模块。
+
+2026-10-05 已部署到 [歌日和](https://jp-learn-delta.vercel.app/)，线上验证了授权会话、官方搜索、歌词与备用音频实际播放（含 0.75× 变速）。测试中 `lemon中文版(cover时代少年团)` 可播放，米津玄師的 `アイネクライネ` 和 `Lemon` 没有返回音频；本地能试听不代表 Vercel 上也可用，结果取决于网易云实际下发的权限和部署环境。
+
 ## 验证
 
 `pnpm typecheck`、`pnpm lint`、`pnpm test` 和 `pnpm build` 检查类型、签名、Cookie 防篡改、同源边界、歌曲映射票据及歌词时间轴。真实接口和浏览器验证需要扫码登录，且当地网络、账号与版权范围会影响结果。罗马音和翻译只显示官方提供的文本；没有自动生成假名、翻译或音准评分。
