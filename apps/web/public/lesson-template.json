@@ -1,0 +1,21 @@
+{
+  "id": "my-first-song",
+  "title": "我的第一首歌",
+  "subtitle": "一句一句，慢慢唱",
+  "description": "替换为你想学习的歌词、读音和释义。",
+  "theme": "sage",
+  "lines": [
+    {
+      "id": "1",
+      "tokens": [{ "text": "君", "reading": "きみ" }, { "text": "へ" }],
+      "kana": "きみへ",
+      "romaji": "kimi e",
+      "translation": "给你",
+      "tip": "へ作为方向助词时读 e。",
+      "focus": [
+        { "kana": "き", "romaji": "ki", "example": "きみ · 你" },
+        { "kana": "へ", "romaji": "he / 助词 e", "example": "きみへ · 给你" }
+      ]
+    }
+  ]
+}

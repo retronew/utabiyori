@@ -1,0 +1,11 @@
+node_modules
+**/node_modules
+**/dist
+.artifacts
+.git
+*.tsbuildinfo
+**/*.tsbuildinfo
+.env
+.env.*
+*.pem
+*.key
