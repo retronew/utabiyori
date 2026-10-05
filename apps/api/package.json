@@ -1,0 +1,16 @@
+{
+  "name": "@jp-learn/api",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "node --experimental-strip-types --test src/*.test.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^24.13.3",
+    "typescript": "~6.0.2"
+  },
+  "dependencies": {
+    "@neteasecloudmusicapienhanced/api": "4.41.0"
+  }
+}

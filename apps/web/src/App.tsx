@@ -4,6 +4,7 @@ import { completion, progressKey } from '@jp-learn/shared'
 import type { Progress } from '@jp-learn/shared'
 import './App.css'
 import AudioPractice from './components/AudioPractice'
+import NeteasePractice from './components/NeteasePractice'
 import { importLesson, readLibrary } from './library'
 
 const storageKey = 'jp-learn:progress:v1'
@@ -26,7 +27,7 @@ export default function App() {
   const [lineIndex, setLineIndex] = useState(0)
   const [romaji, setRomaji] = useState(true)
   const [translation, setTranslation] = useState(true)
-  const [tab, setTab] = useState<'songs' | 'review'>('songs')
+  const [tab, setTab] = useState<'songs' | 'review' | 'music'>('songs')
   const [progress, setProgress] = useState<Progress>(readProgress)
   const [message, setMessage] = useState('')
   const [speaking, setSpeaking] = useState(false)
@@ -121,6 +122,16 @@ export default function App() {
         <div className="nav-label">我的学习空间</div>
         <nav>
           <button
+            className={tab === 'music' ? 'nav-item active' : 'nav-item'}
+            onClick={() => {
+              stopSpeech()
+              setMessage('')
+              setTab('music')
+            }}
+          >
+            <span>♪</span>网易云练习
+          </button>
+          <button
             className={tab === 'songs' ? 'nav-item active' : 'nav-item'}
             onClick={() => setTab('songs')}
             aria-label="歌曲练习"
@@ -165,7 +176,11 @@ export default function App() {
         <header className="topbar">
           <span>
             我的学习空间 <span className="crumb">/</span>{' '}
-            {tab === 'songs' ? '歌曲练习' : '我的复习'}
+            {tab === 'music'
+              ? '网易云练习'
+              : tab === 'songs'
+                ? '歌曲练习'
+                : '我的复习'}
           </span>
           <span className="local-badge">
             <i />
@@ -173,31 +188,35 @@ export default function App() {
           </span>
         </header>
         <div className="workspace">
-          <section className="welcome">
-            <div>
-              <div className="eyebrow">LET'S SING IN JAPANESE</div>
-              <h1>
-                {tab === 'songs' ? (
-                  <>
-                    让日语，从一首歌开始<span>。</span>
-                  </>
-                ) : (
-                  <>
-                    把会唱的句子，再唱一遍<span>。</span>
-                  </>
-                )}
-              </h1>
-              <p>听得懂一点，就已经是很好的开始。今天，只学会一句也可以。</p>
-            </div>
-            <div className="daily-progress">
-              <span className="progress-number">
-                {learned}
-                <small> / {total}</small>
-              </span>
-              <span>已学会的句子</span>
-            </div>
-          </section>
-          {tab === 'review' ? (
+          {tab !== 'music' && (
+            <section className="welcome">
+              <div>
+                <div className="eyebrow">LET'S SING IN JAPANESE</div>
+                <h1>
+                  {tab === 'songs' ? (
+                    <>
+                      让日语，从一首歌开始<span>。</span>
+                    </>
+                  ) : (
+                    <>
+                      把会唱的句子，再唱一遍<span>。</span>
+                    </>
+                  )}
+                </h1>
+                <p>听得懂一点，就已经是很好的开始。今天，只学会一句也可以。</p>
+              </div>
+              <div className="daily-progress">
+                <span className="progress-number">
+                  {learned}
+                  <small> / {total}</small>
+                </span>
+                <span>已学会的句子</span>
+              </div>
+            </section>
+          )}
+          {tab === 'music' ? (
+            <NeteasePractice />
+          ) : tab === 'review' ? (
             <section className="review-panel">
               <h2>我的复习</h2>
               <p>关掉罗马音，试着只看假名读出这些句子。</p>

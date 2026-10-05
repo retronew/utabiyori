@@ -1,6 +1,7 @@
 {
   "name": "jp-learn",
   "private": true,
+  "type": "module",
   "packageManager": "pnpm@11.24.0",
   "engines": {
     "node": ">=22.12.0"
@@ -10,7 +11,7 @@
     "build": "pnpm -r build",
     "typecheck": "pnpm -r typecheck",
     "lint": "pnpm -r lint",
-    "test": "pnpm --filter @jp-learn/shared test",
+    "test": "pnpm -r --if-present test",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
