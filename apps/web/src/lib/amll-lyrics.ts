@@ -3,8 +3,6 @@ import type { TimedLine } from '#music'
 
 interface AmllLyricsOptions {
   duration: number
-  showRomaji: boolean
-  showTranslation: boolean
 }
 
 export function toAmllLyrics(lines: TimedLine[], options: AmllLyricsOptions) {
@@ -47,8 +45,8 @@ export function toAmllLyrics(lines: TimedLine[], options: AmllLyricsOptions) {
       endTime,
       // A single word represents LRC; no syllable timing is invented.
       words: validWords ? words : [{ word: line.text, startTime, endTime }],
-      translatedLyric: options.showTranslation ? (line.translation ?? '') : '',
-      romanLyric: options.showRomaji ? (line.romaji ?? '') : '',
+      translatedLyric: line.translation ?? '',
+      romanLyric: line.romaji ?? '',
       isBG: false,
       isDuet: false,
     })

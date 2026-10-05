@@ -25,6 +25,8 @@ import { cn } from '#lib/utils'
 import type { PlaybackQuality } from '#lib/audio-transport'
 import { usePlaybackShortcut } from '#hooks/use-playback-shortcut'
 
+const selectTriggerClassName = 'w-auto min-w-0 text-xs sm:text-xs'
+
 export interface PlayerControlsProps {
   title?: string
   subtitle?: string
@@ -101,10 +103,16 @@ export function PlayerControls({
     value,
     label: `${value}×`,
   }))
+  const details = [
+    streamQualityNotice,
+    activeQuality === 'dsp' ? '保音高变速' : '',
+  ]
+    .filter(Boolean)
+    .join(' · ')
   return (
     <div
       className={cn(
-        'grid min-w-0 grid-cols-[minmax(0,1fr)] items-center gap-3 px-4 py-3 lg:grid-cols-[minmax(140px,1fr)_minmax(322px,1.6fr)_minmax(140px,1fr)] lg:gap-6 lg:px-6',
+        'grid min-w-0 grid-cols-[minmax(0,1fr)] items-center gap-3 px-2 py-2 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] lg:gap-4 lg:px-5',
         compact && 'grid-cols-1! px-0! py-0!',
       )}
     >
@@ -118,154 +126,159 @@ export function PlayerControls({
             <p className="mt-0.5 truncate text-xs text-muted-foreground">
               {subtitle || '找到喜欢的声音，从一句开始'}
             </p>
+            {details && (
+              <p
+                role="status"
+                title={details}
+                className="mt-1 truncate text-[10px] text-muted-foreground"
+              >
+                {details}
+              </p>
+            )}
           </div>
         </div>
       )}
-      <div className="flex min-w-0 flex-col items-center gap-1.5">
+      <div className="flex min-w-0 flex-col items-center gap-1 lg:min-w-[384px]">
         {title && (
           <p className="max-w-full truncate text-[10px] text-muted-foreground lg:hidden">
             {title}
             {subtitle ? ` · ${subtitle}` : ''}
           </p>
         )}
-        <div className="flex items-center justify-center gap-1 sm:gap-3">
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            aria-label={loopLabel || (loop ? '停止逐句循环' : '循环当前句')}
-            aria-pressed={loop || false}
-            className={cn(
-              'text-muted-foreground',
-              loop && 'bg-primary/10 text-primary',
-            )}
-            disabled={disabled || loopDisabled || !onLoop}
-            onClick={onLoop}
-          >
-            <Repeat1 className="size-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            aria-label="上一句"
-            disabled={disabled || previousDisabled || !onPrevious}
-            onClick={onPrevious}
-          >
-            <SkipBack className="size-4 fill-current" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon-lg"
-            aria-label={playing ? '暂停播放' : '播放歌曲'}
-            aria-keyshortcuts="Space"
-            title="播放 / 暂停（空格）"
-            onClick={onToggle}
-            disabled={disabled}
-            aria-busy={loading || undefined}
-            className="rounded-full text-foreground [&_svg]:opacity-100"
-          >
-            {loading ? (
-              <span
-                className="absolute inset-1.5 animate-spin rounded-full border-2 border-foreground/20 border-t-foreground"
-                aria-hidden
-              />
-            ) : null}
-            {playing ? (
-              <Pause className="size-6 fill-current" />
-            ) : (
-              <Play className="size-6 translate-x-0.5 fill-current" />
-            )}
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            aria-label="下一句"
-            disabled={disabled || nextDisabled || !onNext}
-            onClick={onNext}
-          >
-            <SkipForward className="size-4 fill-current" />
-          </Button>
-          <Select
-            items={rates}
-            value={rate}
-            onValueChange={(value) => {
-              if (value !== null) onRate(value)
-            }}
-            disabled={disabled}
-          >
-            <SelectTrigger
-              size="sm"
-              aria-label="播放速度"
-              className="h-7 min-h-0 w-[60px] min-w-0 gap-1 border-0 bg-transparent px-1.5 text-[11px] shadow-none sm:w-[66px] sm:gap-1.5 sm:text-xs [&_svg]:size-3"
+        <div className="flex w-full flex-wrap items-center justify-center gap-x-3 gap-y-1.5">
+          <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              aria-label={loopLabel || (loop ? '停止逐句循环' : '循环当前句')}
+              aria-pressed={loop || false}
+              className={cn(
+                'text-muted-foreground',
+                loop && 'bg-primary/10 text-primary',
+              )}
+              disabled={disabled || loopDisabled || !onLoop}
+              onClick={onLoop}
             >
-              <SelectValue />
-            </SelectTrigger>
-            <SelectPopup alignItemWithTrigger={false}>
-              {rates.map((item) => (
-                <SelectItem key={item.value} value={item.value}>
-                  {item.label}
-                </SelectItem>
-              ))}
-            </SelectPopup>
-          </Select>
-          {onQualityChange && (
+              <Repeat1 className="size-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              aria-label="上一句"
+              disabled={disabled || previousDisabled || !onPrevious}
+              onClick={onPrevious}
+            >
+              <SkipBack className="size-4 fill-current" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon-lg"
+              aria-label={playing ? '暂停播放' : '播放歌曲'}
+              aria-keyshortcuts="Space"
+              title="播放 / 暂停（空格）"
+              onClick={onToggle}
+              disabled={disabled}
+              aria-busy={loading || undefined}
+              className="rounded-full text-foreground [&_svg]:opacity-100"
+            >
+              {loading ? (
+                <span
+                  className="absolute inset-1.5 animate-spin rounded-full border-2 border-foreground/20 border-t-foreground"
+                  aria-hidden
+                />
+              ) : null}
+              {playing ? (
+                <Pause className="size-6 fill-current" />
+              ) : (
+                <Play className="size-6 translate-x-0.5 fill-current" />
+              )}
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              aria-label="下一句"
+              disabled={disabled || nextDisabled || !onNext}
+              onClick={onNext}
+            >
+              <SkipForward className="size-4 fill-current" />
+            </Button>
+          </div>
+          <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
             <Select
-              items={[
-                { value: 'dsp', label: '高品质' },
-                { value: 'native', label: '原生' },
-              ]}
-              value={quality}
+              items={rates}
+              value={rate}
               onValueChange={(value) => {
-                if (value === 'dsp' || value === 'native')
-                  onQualityChange(value)
+                if (value !== null) onRate(value)
               }}
+              disabled={disabled}
             >
               <SelectTrigger
                 size="sm"
-                aria-label="变速处理"
-                className="h-7 min-h-0 w-[68px] min-w-0 gap-1 border-0 bg-transparent px-1.5 text-[11px] shadow-none sm:w-[76px] sm:gap-1.5 sm:text-xs [&_svg]:size-3"
+                aria-label="播放速度"
+                className={selectTriggerClassName}
               >
                 <SelectValue />
               </SelectTrigger>
-              <SelectPopup alignItemWithTrigger={false}>
-                <SelectItem value="dsp">高品质 · 保音高</SelectItem>
-                <SelectItem value="native">原生 · 浏览器</SelectItem>
-              </SelectPopup>
-            </Select>
-          )}
-        </div>
-        {onStreamQualityChange && (
-          <div className="flex max-w-full flex-wrap items-center justify-center gap-x-2 gap-y-1">
-            <Select
-              items={MUSIC_QUALITIES}
-              value={streamQuality}
-              disabled={streamQualityDisabled}
-              onValueChange={(value) => {
-                if (isMusicQuality(value)) onStreamQualityChange(value)
-              }}
-            >
-              <SelectTrigger
-                size="sm"
-                aria-label="网易云音质"
-                className="h-6 min-h-0 w-24 text-[11px]"
-              >
-                <SelectValue />
-              </SelectTrigger>
-              <SelectPopup alignItemWithTrigger={false}>
-                {MUSIC_QUALITIES.map((item) => (
+              <SelectPopup>
+                {rates.map((item) => (
                   <SelectItem key={item.value} value={item.value}>
                     {item.label}
                   </SelectItem>
                 ))}
               </SelectPopup>
             </Select>
-            <p
-              role="status"
-              className="max-w-full text-center text-[10px] text-muted-foreground"
-            >
-              {streamQualityNotice}
-            </p>
+            {onQualityChange && (
+              <Select
+                items={[
+                  { value: 'dsp', label: '高品质' },
+                  { value: 'native', label: '原生' },
+                ]}
+                value={quality}
+                onValueChange={(value) => {
+                  if (value === 'dsp' || value === 'native')
+                    onQualityChange(value)
+                }}
+              >
+                <SelectTrigger
+                  size="sm"
+                  aria-label="变速处理"
+                  className={selectTriggerClassName}
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectPopup>
+                  <SelectItem value="dsp">高品质 · 保音高</SelectItem>
+                  <SelectItem value="native">原生 · 浏览器</SelectItem>
+                </SelectPopup>
+              </Select>
+            )}
+            {onStreamQualityChange && (
+              <Select
+                items={MUSIC_QUALITIES}
+                value={streamQuality}
+                disabled={streamQualityDisabled}
+                onValueChange={(value) => {
+                  if (isMusicQuality(value)) onStreamQualityChange(value)
+                }}
+              >
+                <SelectTrigger
+                  size="sm"
+                  aria-label="网易云音质"
+                  className={selectTriggerClassName}
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectPopup>
+                  {MUSIC_QUALITIES.map((item) => (
+                    <SelectItem key={item.value} value={item.value}>
+                      {item.label}
+                    </SelectItem>
+                  ))}
+                </SelectPopup>
+              </Select>
+            )}
           </div>
-        )}
+        </div>
         {qualityNotice ? (
           <p
             role="status"
@@ -273,8 +286,6 @@ export function PlayerControls({
           >
             {qualityNotice}
           </p>
-        ) : activeQuality === 'dsp' ? (
-          <p className="text-[10px] text-muted-foreground">保音高变速</p>
         ) : null}
         <div className="flex w-full max-w-lg items-center gap-2.5 text-[10px] tabular-nums text-muted-foreground">
           <span className="w-8 shrink-0 text-right">{formatTime(current)}</span>
@@ -292,6 +303,15 @@ export function PlayerControls({
           />
           <span className="w-8 shrink-0">{formatTime(maximum)}</span>
         </div>
+        {details && (
+          <p
+            role="status"
+            title={details}
+            className="w-full truncate text-center text-[10px] text-muted-foreground lg:hidden"
+          >
+            {details}
+          </p>
+        )}
       </div>
       {!compact && (
         <div className="flex items-center justify-end gap-3 max-lg:hidden">
@@ -314,10 +334,10 @@ export function PlayerControls({
               onVolume(Array.isArray(value) ? value[0]! : value)
             }
             disabled={disabled}
-            className="w-20! [&_[data-slot=slider-control]]:min-w-0 [&_[data-slot=slider-thumb]]:size-2.5 [&_[data-slot=slider-indicator]]:bg-foreground/65"
+            className="w-20! max-xl:hidden [&_[data-slot=slider-control]]:min-w-0 [&_[data-slot=slider-thumb]]:size-2.5 [&_[data-slot=slider-indicator]]:bg-foreground/65"
           />
           <Headphones
-            className="ml-1 size-4 text-muted-foreground"
+            className="ml-1 size-4 text-muted-foreground max-xl:hidden"
             aria-hidden
           />
         </div>

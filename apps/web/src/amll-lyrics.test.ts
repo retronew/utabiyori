@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import { toAmllLyrics } from '#lib/amll-lyrics'
 import type { TimedLine } from '#music'
 
-const options = { duration: 30, showRomaji: true, showTranslation: true }
+const options = { duration: 30 }
 
 test('AMLL receives integer milliseconds, official word gaps and separate learning text', () => {
   const lines: TimedLine[] = [
@@ -53,7 +53,7 @@ test('LRC stays line-level and silent rows bound the preceding line without shif
   assert.equal(result.lyricLines[1].endTime, 30000)
 })
 
-test('AMLL validates ranges and words, clamps duration and hides text without mutating the original', () => {
+test('AMLL validates ranges and words, clamps duration and retains learning text independently of display', () => {
   const result = toAmllLyrics(
     [
       { time: NaN, text: 'bad' },
@@ -69,15 +69,15 @@ test('AMLL validates ranges and words, clamps duration and hides text without mu
       { time: 20, end: 40, text: '最後' },
       { time: 40, text: 'outside' },
     ],
-    { ...options, showRomaji: false, showTranslation: false },
+    options,
   )
   assert.deepEqual(result.sourceIndexes, [2, 3])
   assert.equal(result.lyricLines[1].endTime, 30000)
   assert.deepEqual(result.lyricLines[0].words, [
     { word: '歌', startTime: 1000, endTime: 3000 },
   ])
-  assert.equal(result.lyricLines[0].romanLyric, '')
-  assert.equal(result.lyricLines[0].translatedLyric, '')
+  assert.equal(result.lyricLines[0].romanLyric, 'uta')
+  assert.equal(result.lyricLines[0].translatedLyric, '歌曲')
   assert.deepEqual(
     toAmllLyrics([{ time: 1, text: '歌' }], { ...options, duration: Infinity })
       .lyricLines,

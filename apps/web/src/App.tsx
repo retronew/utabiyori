@@ -84,7 +84,7 @@ export default function App() {
           <PlayerDock
             id="player-dock"
             aria-label="播放器"
-            className="z-30 mx-2 mt-3 mb-2 min-h-[92px] w-[calc(100%-1rem)] max-w-[1040px] self-center rounded-[20px] bg-player/95 pb-[env(safe-area-inset-bottom)] shadow-[var(--shadow-dock)] backdrop-blur-2xl sm:mx-5 sm:mb-4 sm:w-[calc(100%-2.5rem)]"
+            className="z-30 mx-3 mt-2 mb-2 shrink-0 pb-[env(safe-area-inset-bottom)] lg:mr-4 lg:ml-0"
           />
         </main>
       </div>

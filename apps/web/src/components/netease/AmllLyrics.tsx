@@ -7,6 +7,7 @@ import '@applemusic-like-lyrics/core/style.css'
 import type { TimedLine } from '#music'
 import { toAmllLyrics } from '#lib/amll-lyrics'
 import { useReducedMotion } from '#hooks/use-reduced-motion'
+import { cn } from '#lib/utils'
 
 const optimizeOptions = {
   tryAdvanceStartTime: false,
@@ -43,8 +44,8 @@ export function AmllLyrics({
   const reducedMotion = useReducedMotion()
   // AMLL rebuilds and freezes lyrics when the array identity changes.
   const { lyricLines, sourceIndexes } = useMemo(
-    () => toAmllLyrics(lines, { duration, showRomaji, showTranslation }),
-    [lines, duration, showRomaji, showTranslation],
+    () => toAmllLyrics(lines, { duration }),
+    [lines, duration],
   )
   const readClock = useEffectEvent(readTime)
   const pausedTime = playing ? 0 : current
@@ -69,7 +70,13 @@ export function AmllLyrics({
       aria-hidden
       lang="ja"
       data-slot="amll-lyrics"
-      className="h-full min-h-0 w-full font-bold [--amll-lp-font-size:28px] md:[--amll-lp-font-size:32px] xl:[--amll-lp-font-size:36px] [&_[class$=_lyricSubLine]]:text-[18px]! [&_[class$=_lyricSubLine]]:leading-relaxed! [&_[class$=_lyricSubLine]]:opacity-70! md:[&_[class$=_lyricSubLine]]:text-xl! [&_.amll-lyric-player]:leading-[1.5]!"
+      className={cn(
+        'h-full min-h-0 w-full font-bold [--amll-lp-font-size:28px] md:[--amll-lp-font-size:32px] xl:[--amll-lp-font-size:36px] [&_[class$=_lyricSubLine]]:text-[18px]! [&_[class$=_lyricSubLine]]:leading-relaxed! [&_[class$=_lyricSubLine]]:opacity-70! md:[&_[class$=_lyricSubLine]]:text-xl! [&_.amll-lyric-player]:leading-[1.5]!',
+        // AMLL 0.6 renders translation and romanization as children 2 and 3.
+        // Retain their space so visibility toggles do not rebuild or reflow lyrics.
+        !showTranslation && '[&_[class$=_lyricSubLine]:nth-child(2)]:invisible',
+        !showRomaji && '[&_[class$=_lyricSubLine]:nth-child(3)]:invisible',
+      )}
       lyricLines={lyricLines}
       optimizeOptions={optimizeOptions}
       currentTime={Math.round(Math.max(0, current) * 1000)}

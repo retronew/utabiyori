@@ -433,7 +433,7 @@ export function useNeteasePractice() {
     streamQuality,
     streamQualityDisabled: streamBusy || !playback,
     streamQualityNotice: playback
-      ? `网易云实际音质：${MUSIC_QUALITIES.find((item) => item.value === playback.quality)?.label ?? '供应商未标注'}${playback.codec ? ` · ${playback.codec}` : ''}${playback.bitrate ? ` · ${Math.round(playback.bitrate)} kbps` : ''}${playback.quality && playback.quality !== streamQuality ? '（所选档位不可用，已由网易云降级）' : ''}`
+      ? `实际：${MUSIC_QUALITIES.find((item) => item.value === playback.quality)?.label ?? '供应商未标注'}${playback.quality && playback.quality !== streamQuality ? '（已降级）' : ''}${playback.codec ? ` · ${playback.codec}` : ''}${playback.bitrate ? ` · ${Math.round(playback.bitrate)} kbps` : ''}`
       : '',
     onStreamQualityChange: (value) => void changeStreamQuality(value),
     title: selected?.name,
