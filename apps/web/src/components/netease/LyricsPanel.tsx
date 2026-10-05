@@ -1,10 +1,11 @@
-import { AudioLines, Music2, RefreshCw } from 'lucide-react'
+import { AudioLines, Music2, RefreshCw, Heart } from 'lucide-react'
 import type { MusicSong, TimedLine, MusicPlayback } from '#music'
 import type { LineRange } from '#lib/music-playback'
 import { Button } from '#components/ui/button'
 import { Switch } from '#components/ui/switch'
 import { ScrollArea } from '#components/ui/scroll-area'
 import { Artwork } from '#components/Artwork'
+import { MusicAtmosphere } from '#components/netease/MusicAtmosphere'
 import { useLyricFollow } from '#hooks/use-lyric-follow'
 import { cn } from '#lib/utils'
 import { formatTime } from '#lib/media'
@@ -12,6 +13,9 @@ import { formatTime } from '#lib/media'
 interface LyricsPanelProps {
   className?: string
   visible: boolean
+  playing: boolean
+  favorite: boolean
+  onFavorite: () => void
   selected: MusicSong | null
   playback: MusicPlayback | null
   lines: TimedLine[]
@@ -21,6 +25,7 @@ interface LyricsPanelProps {
   webLoggedIn: boolean
   loop: boolean
   error: string
+  favoritesError: string
   notice: string
   lineRange: (index: number) => LineRange
   onRomajiChange: (show: boolean) => void
@@ -32,6 +37,9 @@ interface LyricsPanelProps {
 export function LyricsPanel({
   className,
   visible,
+  playing,
+  favorite,
+  onFavorite,
   selected,
   playback,
   lines,
@@ -41,6 +49,7 @@ export function LyricsPanel({
   webLoggedIn,
   loop,
   error,
+  favoritesError,
   notice,
   lineRange,
   onRomajiChange,
@@ -65,15 +74,7 @@ export function LyricsPanel({
         className,
       )}
     >
-      {selected?.cover && (
-        <img
-          src={selected.cover}
-          alt=""
-          aria-hidden
-          className="pointer-events-none absolute inset-0 -z-20 size-full scale-125 object-cover opacity-35 blur-[70px]"
-        />
-      )}
-      <div className="pointer-events-none absolute inset-0 -z-10 bg-linear-to-b from-black/10 via-black/25 to-black/50" />
+      <MusicAtmosphere cover={selected?.cover} playing={playing && visible} />
       {selected ? (
         <>
           <div className="flex shrink-0 items-center gap-4 px-5 py-4 md:px-6 md:pt-6 md:pb-5 xl:gap-5 xl:px-8">
@@ -81,7 +82,7 @@ export function LyricsPanel({
               src={selected.cover}
               className="size-16 shrink-0 rounded-xl shadow-xl md:size-20 xl:size-24"
             />
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <p className="mb-1 text-[9px] font-medium tracking-[0.2em] text-white/45">
                 NOW PRACTICING
               </p>
@@ -95,6 +96,16 @@ export function LyricsPanel({
                 {selected.album}
               </p>
             </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label={favorite ? '取消收藏当前歌曲' : '收藏当前歌曲'}
+              aria-pressed={favorite}
+              onClick={onFavorite}
+              className="shrink-0 text-white hover:bg-white/10"
+            >
+              <Heart className={cn('size-5', favorite && 'fill-current')} />
+            </Button>
           </div>
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-y border-white/10 px-6 py-3 text-[11px] text-white/60 xl:px-8">
             <label className="flex items-center gap-2">
@@ -125,6 +136,11 @@ export function LyricsPanel({
             </span>
           </div>
           <div className="px-6 pt-3 xl:px-8">
+            {favoritesError && (
+              <p role="alert" className="mb-2 text-xs leading-5 text-rose-100">
+                {favoritesError}
+              </p>
+            )}
             {error ? (
               <div
                 role="alert"
@@ -153,11 +169,12 @@ export function LyricsPanel({
             onWheel={onManualScroll}
             onTouchMove={onManualScroll}
           >
-            <div className="space-y-1 px-3 pt-5 pb-[25vh] xl:px-5">
+            <div className="space-y-1 px-3 py-[var(--lyric-edge-space,25vh)] xl:px-5">
               {lines.map(
                 (line, index) =>
                   line.text && (
-                    <button
+                    <Button
+                      variant="ghost"
                       key={line.time + '-' + index}
                       ref={(node) => {
                         if (node) lyricButtons.current.set(index, node)
@@ -170,8 +187,10 @@ export function LyricsPanel({
                         onSeekLine(index)
                       }}
                       className={cn(
-                        'group block w-full rounded-xl px-3 py-4 text-left transition-colors duration-300 hover:bg-white/5 focus-visible:outline-2 focus-visible:outline-white/60 xl:px-3',
-                        index === lineIndex ? 'text-white' : 'text-white/35',
+                        'group block h-auto w-full origin-left rounded-xl px-3 py-5 text-left whitespace-normal transition-[color,transform,filter,background-color] duration-500 hover:bg-white/5 focus-visible:ring-white/60 sm:h-auto xl:px-3 motion-reduce:transform-none',
+                        index === lineIndex
+                          ? 'scale-100 text-white'
+                          : 'scale-[0.97] text-white/50',
                         playback?.trial &&
                           !lineRange(index).available &&
                           'opacity-60',
@@ -185,21 +204,40 @@ export function LyricsPanel({
                       </time>
                       <span
                         lang="ja"
-                        className="block text-[24px] leading-[1.55] font-bold tracking-tight xl:text-[30px]"
+                        className={cn(
+                          'block text-[28px] leading-[1.5] font-bold tracking-tight transition-[text-shadow,filter] duration-700 md:text-[32px] xl:text-[36px]',
+                          index === lineIndex
+                            ? '[text-shadow:0_0_24px_#ffffff60,0_0_6px_#ffffff30]'
+                            : 'blur-[0.3px] group-hover:blur-none',
+                        )}
                       >
                         {line.text}
                       </span>
                       {showRomaji && line.romaji && (
-                        <span className="mt-2 block text-[12px] leading-5 font-medium opacity-60">
+                        <span
+                          className={cn(
+                            'mt-3 block text-base leading-relaxed font-medium md:text-lg xl:text-xl',
+                            index === lineIndex
+                              ? 'text-white/90'
+                              : 'text-white/65',
+                          )}
+                        >
                           {line.romaji}
                         </span>
                       )}
                       {showTranslation && line.translation && (
-                        <span className="mt-1 block text-[13px] leading-6 opacity-60">
+                        <span
+                          className={cn(
+                            'mt-1.5 block text-[17px] leading-relaxed md:text-lg xl:text-xl',
+                            index === lineIndex
+                              ? 'text-white/85'
+                              : 'text-white/65',
+                          )}
+                        >
                           {line.translation}
                         </span>
                       )}
-                    </button>
+                    </Button>
                   ),
               )}
               {!lines.some((line) => line.text) && (

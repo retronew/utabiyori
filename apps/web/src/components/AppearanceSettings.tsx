@@ -79,7 +79,8 @@ export function AppearanceSettings() {
               <legend className="mb-3 text-xs font-semibold">主题颜色</legend>
               <div className="flex justify-between gap-2">
                 {themeColors.map((item) => (
-                  <button
+                  <Button
+                    variant="ghost"
                     key={item.color}
                     aria-label={`${item.name}主题色`}
                     aria-pressed={settings.color === item.color}
@@ -87,7 +88,7 @@ export function AppearanceSettings() {
                       setDraft(item.color)
                       update({ color: item.color })
                     }}
-                    className="flex flex-col items-center gap-2 rounded-lg p-1.5 outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="h-auto flex-col gap-2 rounded-lg p-1.5 sm:h-auto"
                   >
                     <span
                       style={{ backgroundColor: item.color }}
@@ -104,7 +105,7 @@ export function AppearanceSettings() {
                     <span className="text-[10px] text-muted-foreground">
                       {item.name}
                     </span>
-                  </button>
+                  </Button>
                 ))}
               </div>
             </fieldset>

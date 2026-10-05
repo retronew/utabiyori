@@ -1,6 +1,7 @@
 import { useEffect, useEffectEvent, useRef } from 'react'
 import type { RefObject } from 'react'
 import type { musicRequest } from '#music'
+import type { AudioTransport } from '#lib/audio-transport'
 
 interface PlaybackRecord {
   songId: string
@@ -8,11 +9,10 @@ interface PlaybackRecord {
   seconds: number
   last: number
   playing: boolean
-  rate: number
 }
 
 interface PlaybackReportOptions {
-  audio: RefObject<HTMLAudioElement | null>
+  audio: RefObject<AudioTransport | null>
   request: typeof musicRequest
   onNotice: (message: string) => void
 }
@@ -27,9 +27,8 @@ export function usePlaybackReport({
   function updateElapsed() {
     const record = report.current
     if (!audio.current || !record) return
-    const now = performance.now()
-    if (record.playing)
-      record.seconds += Math.max(0, (now - record.last) / 1000) * record.rate
+    const now = audio.current.playedSeconds
+    if (record.playing) record.seconds += Math.max(0, now - record.last)
     record.last = now
   }
 
@@ -50,7 +49,7 @@ export function usePlaybackReport({
 
   function startReport(songId: string) {
     if (report.current) {
-      report.current.last = performance.now()
+      report.current.last = audio.current?.playedSeconds ?? 0
       report.current.playing = true
       return
     }
@@ -58,9 +57,8 @@ export function usePlaybackReport({
       songId,
       start: Date.now(),
       seconds: 0,
-      last: performance.now(),
+      last: audio.current?.playedSeconds ?? 0,
       playing: true,
-      rate: audio.current?.playbackRate || 1,
     }
     report.current = record
     void request({
@@ -74,11 +72,6 @@ export function usePlaybackReport({
   function suspendReport() {
     updateElapsed()
     if (report.current) report.current.playing = false
-  }
-
-  function updateRate(rate: number) {
-    updateElapsed()
-    if (report.current) report.current.rate = rate
   }
 
   const interrupt = useEffectEvent(() => {
@@ -110,5 +103,5 @@ export function usePlaybackReport({
     }
   }, [])
 
-  return { updateElapsed, finishReport, startReport, suspendReport, updateRate }
+  return { updateElapsed, finishReport, startReport, suspendReport }
 }

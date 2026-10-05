@@ -119,3 +119,15 @@
     scroll-behavior: auto !important;
   }
 }
+
+@keyframes music-drift {
+  0% {
+    transform: translate(-3%, -4%) rotate(-12deg) scale(1.05);
+  }
+  50% {
+    transform: translate(5%, 3%) rotate(8deg) scale(1.2);
+  }
+  100% {
+    transform: translate(-2%, 6%) rotate(20deg) scale(1.1);
+  }
+}

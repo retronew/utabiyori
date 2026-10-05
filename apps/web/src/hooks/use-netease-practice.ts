@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from 'react'
-import type { ComponentPropsWithRef } from 'react'
 import { mergeLyrics } from '#music'
 import type { MusicSong, TimedLine, MusicPlayback, MusicLyrics } from '#music'
 import type { PlayerControlsProps } from '#components/PlayerControls'
@@ -9,8 +8,14 @@ import { useNeteaseAccount } from '#hooks/use-netease-account'
 import { usePlaybackReport } from '#hooks/use-playback-report'
 import { announceAudio } from '#lib/audio-events'
 import { getLineRange } from '#lib/music-playback'
+import { AudioTransport } from '#lib/audio-transport'
+import { useAudioPlayback } from '#hooks/use-audio-playback'
+import { useMusicFavorites } from '#hooks/use-music-favorites'
+import { resolveFavorite } from '#lib/music-favorites'
+import type { FavoriteSong } from '#lib/music-favorites'
 
 export function useNeteasePractice() {
+  const favorites = useMusicFavorites()
   const slot = usePlayerSlot('music')
   const [accountOpen, setAccountOpen] = useState(false)
   const [mobileView, setMobileView] = useState<'library' | 'lyrics'>('library')
@@ -25,6 +30,7 @@ export function useNeteasePractice() {
   const [offset, setOffset] = useState(0)
   const [searched, setSearched] = useState('')
   const [searchBusy, setSearchBusy] = useState(false)
+  const [favoriteBusy, setFavoriteBusy] = useState(false)
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
   const [selected, setSelected] = useState<MusicSong | null>(null)
@@ -36,11 +42,9 @@ export function useNeteasePractice() {
   const [rate, setRate] = useState(1)
   const [showRomaji, setShowRomaji] = useState(true)
   const [showTranslation, setShowTranslation] = useState(true)
-  const audio = useRef<HTMLAudioElement>(null)
+  const [transport] = useState(() => new AudioTransport())
+  const audio = useRef(transport)
   useExclusiveAudio(audio)
-  useEffect(() => {
-    if (audio.current) audio.current.volume = volume
-  }, [volume, playback])
   const requestVersion = useRef(0)
   const activeRequest = useRef<AbortController | null>(null)
   const searchRequest = useRef<AbortController | null>(null)
@@ -57,6 +61,7 @@ export function useNeteasePractice() {
       requestVersion.current++
       searchVersion.current++
       setSearchBusy(false)
+      setFavoriteBusy(false)
       setPlayback(null)
       setLoop(false)
     },
@@ -65,14 +70,9 @@ export function useNeteasePractice() {
     },
   })
   const { requestMusic } = account
-  const {
-    updateElapsed,
-    finishReport,
-    startReport,
-    suspendReport,
-    updateRate,
-  } = usePlaybackReport({ audio, request: requestMusic, onNotice: setNotice })
-  const busy = searchBusy || account.busy
+  const { updateElapsed, finishReport, startReport, suspendReport } =
+    usePlaybackReport({ audio, request: requestMusic, onNotice: setNotice })
+  const busy = searchBusy || favoriteBusy || account.busy
   useEffect(
     () => () => {
       activeRequest.current?.abort()
@@ -80,10 +80,6 @@ export function useNeteasePractice() {
     },
     [],
   )
-  useEffect(() => {
-    const media = audio.current
-    if (media) media.playbackRate = rate
-  }, [rate, playback])
   async function search(keyword = query, start = 0) {
     if (!keyword.trim()) return
     searchRequest.current?.abort()
@@ -114,6 +110,7 @@ export function useNeteasePractice() {
     }
   }
   async function selectSong(song: MusicSong) {
+    setFavoriteBusy(false)
     finishReport()
     audio.current?.pause()
     activeRequest.current?.abort()
@@ -166,6 +163,42 @@ export function useNeteasePractice() {
           ? stream.reason.message
           : '播放地址获取失败。',
       )
+  }
+  async function selectFavorite(song: FavoriteSong) {
+    if (!account.loggedIn) {
+      setAccountOpen(true)
+      return
+    }
+    finishReport()
+    audio.current.pause()
+    activeRequest.current?.abort()
+    const controller = new AbortController()
+    activeRequest.current = controller
+    const version = ++requestVersion.current
+    setFavoriteBusy(true)
+    setError('')
+    setNotice('正在重新获取收藏歌曲的播放权限…')
+    try {
+      const fresh = await resolveFavorite(
+        song,
+        (keyword, offset, signal) =>
+          requestMusic<{ songs: MusicSong[]; total: number }>(
+            { action: 'search', keyword, offset },
+            signal,
+          ),
+        controller.signal,
+      )
+      if (version !== requestVersion.current || controller.signal.aborted)
+        return
+      await selectSong(fresh)
+    } catch (error) {
+      if (version === requestVersion.current && !controller.signal.aborted)
+        setError(
+          error instanceof Error ? error.message : '收藏歌曲暂时无法打开。',
+        )
+    } finally {
+      if (version === requestVersion.current) setFavoriteBusy(false)
+    }
   }
   function lineRange(index: number) {
     return getLineRange(
@@ -242,74 +275,85 @@ export function useNeteasePractice() {
     )
     trackTime()
   }
-  const mediaProps = {
-    ref: audio,
-    src: playback?.url,
-    onLoadedMetadata: () => {
-      const media = audio.current
-      if (!media || !playback || !selected) return
-      media.currentTime = playback.trial?.start ?? 0
-      media.playbackRate = rate
-      media.volume = volume
-      setMediaDuration(
-        Number.isFinite(media.duration)
-          ? media.duration
-          : selected.duration / 1000,
-      )
-      setCurrent(media.currentTime)
-      setMediaReady(true)
+  const { mediaProps, qualityProps } = useAudioPlayback(
+    audio,
+    {
+      onLoadedMetadata: () => {
+        const media = audio.current
+        if (!media || !playback || !selected) return
+        media.currentTime = playback.trial?.start ?? 0
+        media.playbackRate = rate
+        media.volume = volume
+        setMediaDuration(
+          Number.isFinite(media.duration)
+            ? media.duration
+            : selected.duration / 1000,
+        )
+        setCurrent(media.currentTime)
+        setMediaReady(true)
+      },
+      onTimeUpdate: trackTime,
+      onSeeking: () => {
+        updateElapsed()
+        trackTime()
+      },
+      onRateChange: () => {
+        if (!audio.current) return
+        updateElapsed()
+        setRate(audio.current.playbackRate)
+      },
+      onPlay: () => {
+        if (!playback) return
+        if (Date.now() >= playback.expires) {
+          audio.current?.pause()
+          setError('播放地址已过期，请重新选择这首歌。')
+          return
+        }
+        if (audio.current) announceAudio(audio.current)
+        slot.activate()
+        setPlaying(true)
+      },
+      onPlaying: () => {
+        setPlaying(true)
+        setBuffering(false)
+        if (playback?.source === 'official' && selected)
+          startReport(selected.id)
+      },
+      onWaiting: () => {
+        setBuffering(true)
+        suspendReport()
+      },
+      onPause: () => {
+        setPlaying(false)
+        setBuffering(false)
+        suspendReport()
+      },
+      onEnded: () => {
+        setPlaying(false)
+        setBuffering(false)
+        finishReport('playend')
+      },
+      onError: () => {
+        setMediaReady(false)
+        setPlaying(false)
+        setBuffering(false)
+        finishReport('exception')
+        setError('音频加载失败或地址已过期，请重新选择歌曲。')
+      },
     },
-    onTimeUpdate: trackTime,
-    onSeeking: () => {
-      updateElapsed()
-      trackTime()
+    {
+      source: playback?.url ?? '',
+      rate,
+      volume,
+      bounds: playback?.trial
+        ? { start: playback.trial.start, end: playback.trial.end }
+        : undefined,
+      loop:
+        loop && range.available ? { start: range.start, end: range.end } : null,
     },
-    onRateChange: () => {
-      if (!audio.current) return
-      updateRate(audio.current.playbackRate)
-      setRate(audio.current.playbackRate)
-    },
-    onPlay: () => {
-      if (!playback) return
-      if (Date.now() >= playback.expires) {
-        audio.current?.pause()
-        setError('播放地址已过期，请重新选择这首歌。')
-        return
-      }
-      if (audio.current) announceAudio(audio.current)
-      slot.activate()
-      setPlaying(true)
-    },
-    onPlaying: () => {
-      setPlaying(true)
-      setBuffering(false)
-      if (playback?.source === 'official' && selected) startReport(selected.id)
-    },
-    onWaiting: () => {
-      setBuffering(true)
-      suspendReport()
-    },
-    onPause: () => {
-      setPlaying(false)
-      setBuffering(false)
-      suspendReport()
-    },
-    onEnded: () => {
-      setPlaying(false)
-      setBuffering(false)
-      finishReport('playend')
-    },
-    onError: () => {
-      setMediaReady(false)
-      setPlaying(false)
-      setBuffering(false)
-      finishReport('exception')
-      setError('音频加载失败或地址已过期，请重新选择歌曲。')
-    },
-    preload: 'metadata',
-    className: 'hidden',
-  } satisfies ComponentPropsWithRef<'audio'>
+  )
   const playerProps = {
+    ...qualityProps,
     title: selected?.name,
     subtitle: selected?.artists,
     cover: selected?.cover,
@@ -350,6 +394,8 @@ export function useNeteasePractice() {
     if (!open) account.cancelQr()
   }
   return {
+    ...favorites,
+    selectFavorite,
     slot,
     account,
     accountOpen,

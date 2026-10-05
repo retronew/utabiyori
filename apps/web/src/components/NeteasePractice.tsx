@@ -40,6 +40,10 @@ export default function NeteasePractice({ visible }: { visible: boolean }) {
     lineRange,
     mediaProps,
     playerProps,
+    favorites,
+    favoritesError,
+    toggleFavorite,
+    selectFavorite,
   } = useNeteasePractice()
   const { ready, loggedIn, webLoggedIn, hybrid, qr, qrStatus } = account
   return (
@@ -72,6 +76,11 @@ export default function NeteasePractice({ visible }: { visible: boolean }) {
             query={query}
             searched={searched}
             songs={songs}
+            favorites={favorites}
+            favoritesError={favoritesError}
+            error={error}
+            onFavorite={toggleFavorite}
+            onSelectFavorite={(song) => void selectFavorite(song)}
             selectedId={selected?.id}
             playing={playing}
             total={total}
@@ -85,6 +94,13 @@ export default function NeteasePractice({ visible }: { visible: boolean }) {
           <LyricsPanel
             className={mobileView !== 'lyrics' ? 'max-lg:hidden' : undefined}
             visible={visible}
+            playing={playing}
+            favorite={Boolean(
+              selected && favorites.some((song) => song.id === selected.id),
+            )}
+            onFavorite={() => {
+              if (selected) toggleFavorite(selected)
+            }}
             selected={selected}
             playback={playback}
             lines={lines}
@@ -93,6 +109,7 @@ export default function NeteasePractice({ visible }: { visible: boolean }) {
             showTranslation={showTranslation}
             webLoggedIn={webLoggedIn}
             loop={loop}
+            favoritesError={favoritesError}
             error={error}
             notice={notice}
             lineRange={lineRange}

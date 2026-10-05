@@ -3,16 +3,16 @@ import {
   Link2,
   ChevronLeft,
   ChevronRight,
-  AudioLines,
   ArrowUpRight,
 } from 'lucide-react'
 import type { MusicSong } from '#music'
+import { useState } from 'react'
+import type { FavoriteSong } from '#lib/music-favorites'
+import { MusicSongRow } from '#components/netease/MusicSongRow'
 import { Button } from '#components/ui/button'
 import { Input } from '#components/ui/input'
 import { ScrollArea } from '#components/ui/scroll-area'
-import { Artwork } from '#components/Artwork'
 import { cn } from '#lib/utils'
-import { formatTime } from '#lib/media'
 
 interface MusicLibraryPanelProps {
   className?: string
@@ -23,6 +23,11 @@ interface MusicLibraryPanelProps {
   query: string
   searched: string
   songs: MusicSong[]
+  favorites: FavoriteSong[]
+  favoritesError: string
+  error: string
+  onFavorite: (song: FavoriteSong) => void
+  onSelectFavorite: (song: FavoriteSong) => void
   selectedId?: string
   playing: boolean
   total: number
@@ -42,6 +47,11 @@ export function MusicLibraryPanel({
   query,
   searched,
   songs,
+  favorites,
+  favoritesError,
+  error,
+  onFavorite,
+  onSelectFavorite,
   selectedId,
   playing,
   total,
@@ -51,6 +61,8 @@ export function MusicLibraryPanel({
   onSelect,
   onAccountOpen,
 }: MusicLibraryPanelProps) {
+  const [view, setView] = useState<'search' | 'favorites'>('search')
+  const favoriteIds = new Set(favorites.map((song) => song.id))
   return (
     <div className={cn('flex min-h-0 flex-col border-r', className)}>
       <div className="space-y-4 border-b p-5">
@@ -74,18 +86,19 @@ export function MusicLibraryPanel({
         <form
           onSubmit={(event) => {
             event.preventDefault()
+            setView('search')
             onSearch()
           }}
           className="flex gap-2"
         >
           <div className="relative min-w-0 flex-1">
-            <Search className="pointer-events-none absolute top-2.5 left-3 z-10 size-4 text-muted-foreground" />
+            <Search className="pointer-events-none absolute top-1/2 left-3 z-10 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               aria-label="搜索歌曲或歌手"
               placeholder="歌曲、歌手或专辑"
               value={query}
               onChange={(event) => onQueryChange(event.target.value)}
-              className="pl-9"
+              className="[&_input]:pl-9"
             />
           </div>
           <Button
@@ -115,53 +128,83 @@ export function MusicLibraryPanel({
                   : '曲库已连接'
                 : '连接账号，开始找歌'}
           {!loggedIn && ready && (
-            <button
+            <Button
+              variant="link"
+              size="xs"
               className="ml-auto text-primary"
               onClick={() => onAccountOpen()}
             >
               连接
-            </button>
+            </Button>
           )}
         </p>
+        <div
+          className="flex gap-1 rounded-lg bg-muted p-1"
+          aria-label="曲库视图"
+        >
+          {(['search', 'favorites'] as const).map((tab) => (
+            <Button
+              key={tab}
+              variant="ghost"
+              size="sm"
+              aria-pressed={view === tab}
+              onClick={() => setView(tab)}
+              className={cn(
+                'flex-1 text-xs',
+                view === tab && 'bg-background text-primary shadow-sm',
+              )}
+            >
+              {tab === 'search' ? '搜索结果' : `我的收藏 · ${favorites.length}`}
+            </Button>
+          ))}
+        </div>
+        {(favoritesError || error) && (
+          <p role="alert" className="text-xs leading-5 text-destructive">
+            {favoritesError || error}
+          </p>
+        )}
+        {view === 'favorites' && (
+          <p className="text-[11px] leading-5 text-muted-foreground">
+            保存在当前浏览器，方便下次练习。
+          </p>
+        )}
       </div>
       <ScrollArea className="flex-1" scrollFade>
         <div className="p-3">
-          {searched && (
+          {view === 'search' && searched && (
             <p className="px-2 pt-2 pb-3 text-xs text-muted-foreground">
               “{searched}” · {total} 首结果
             </p>
           )}
-          {songs.map((song) => (
-            <button
-              key={song.id}
-              onClick={() => onSelect(song)}
-              className={cn(
-                'group flex w-full items-center gap-3 rounded-xl px-2.5 py-2.5 text-left transition-colors hover:bg-muted focus-visible:outline-2 focus-visible:outline-primary',
-                selectedId === song.id && 'bg-primary/8 text-primary',
-              )}
-            >
-              <Artwork
-                src={song.cover}
-                className="size-11 shrink-0 rounded-md"
-              />
-              <span className="min-w-0 flex-1">
-                <span className="block truncate text-[13px] font-semibold">
-                  {song.name}
-                </span>
-                <span className="mt-1 block truncate text-[11px] text-muted-foreground">
-                  {song.artists}
-                </span>
-              </span>
-              {selectedId === song.id && playing ? (
-                <AudioLines className="size-4 shrink-0" />
-              ) : (
-                <time className="text-[10px] tabular-nums text-muted-foreground">
-                  {formatTime(song.duration / 1000)}
-                </time>
-              )}
-            </button>
-          ))}
-          {!songs.length && (
+          {view === 'search'
+            ? songs.map((song) => (
+                <MusicSongRow
+                  key={song.id}
+                  song={song}
+                  selected={selectedId === song.id}
+                  playing={playing}
+                  favorite={favoriteIds.has(song.id)}
+                  onSelect={() => onSelect(song)}
+                  onFavorite={() => onFavorite(song)}
+                />
+              ))
+            : favorites.map((song) => (
+                <MusicSongRow
+                  key={song.id}
+                  song={song}
+                  selected={selectedId === song.id}
+                  playing={playing}
+                  favorite
+                  onSelect={() => onSelectFavorite(song)}
+                  onFavorite={() => onFavorite(song)}
+                />
+              ))}
+          {view === 'favorites' && !favorites.length && (
+            <div className="px-3 py-8 text-sm leading-7 text-muted-foreground">
+              还没有收藏歌曲。点击搜索结果旁的爱心，把喜欢的歌留到下次练习。
+            </div>
+          )}
+          {view === 'search' && !songs.length && (
             <div className="px-3 py-8">
               <span className="flex size-10 items-center justify-center rounded-xl bg-primary/8 text-primary">
                 <Search className="size-5" />
@@ -197,7 +240,7 @@ export function MusicLibraryPanel({
           )}
         </div>
       </ScrollArea>
-      {songs.length > 0 && (
+      {view === 'search' && songs.length > 0 && (
         <div className="flex items-center justify-between border-t px-5 py-3 text-xs text-muted-foreground">
           <span>
             {offset + 1}–{offset + songs.length} / {total}

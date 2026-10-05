@@ -27,6 +27,11 @@ export function useLyricFollow({
     )
     if (!visible || !button || !viewport) return
     const alignLine = () => {
+      if (!viewport.clientHeight) return
+      viewport.style.setProperty(
+        '--lyric-edge-space',
+        `${viewport.clientHeight / 2}px`,
+      )
       if (Date.now() - manualScroll.current <= 6000) return
       viewport.scrollTo({
         top:
