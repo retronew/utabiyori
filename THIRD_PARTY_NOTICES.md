@@ -61,3 +61,18 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+## Apple Music Like Lyrics (AMLL)
+
+The lyric renderer and fluid cover background use @applemusic-like-lyrics/core
+and @applemusic-like-lyrics/react 0.6.0, licensed AGPL-3.0-only.
+Upstream: https://github.com/amll-dev/applemusic-like-lyrics
+
+The unmodified license text is distributed at
+`apps/web/public/licenses/AMLL-AGPL-3.0.txt`.
+Integration source: `apps/web/src/components/netease/AmllLyrics.tsx`,
+`AmllBackground.tsx` and `apps/web/src/lib/amll-lyrics.ts`.
+Project source: https://github.com/retronew/utabiyori
+
+This notice does not relicense unrelated project files. See `docs/amll.md` for
+integration boundaries and publication requirements.

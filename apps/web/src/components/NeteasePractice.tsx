@@ -59,7 +59,7 @@ export default function NeteasePractice({ visible }: { visible: boolean }) {
           }}
           className="h-full min-h-0 gap-0"
         >
-          <div className="shrink-0 border-b p-2 lg:hidden">
+          <div className="shrink-0 px-3 pb-3 lg:hidden">
             <TabsList aria-label="音乐工作区" className="w-full">
               {(['library', 'lyrics'] as const).map((view) => (
                 <TabsTab key={view} value={view}>
@@ -68,7 +68,7 @@ export default function NeteasePractice({ visible }: { visible: boolean }) {
               ))}
             </TabsList>
           </div>
-          <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)] lg:grid-cols-[320px_minmax(0,1fr)] xl:grid-cols-[350px_minmax(0,1fr)]">
+          <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)] px-3 lg:grid-cols-[280px_minmax(0,1fr)] lg:pr-4 lg:pl-0 xl:grid-cols-[300px_minmax(0,1fr)]">
             <TabsPanel
               value="library"
               keepMounted

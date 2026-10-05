@@ -71,9 +71,9 @@ export function MusicLibraryPanel({
       onValueChange={(value) => {
         if (value === 'search' || value === 'favorites') setView(value)
       }}
-      className={cn('min-h-0 gap-0 border-r', className)}
+      className={cn('min-h-0 gap-0 overflow-clip', className)}
     >
-      <div className="space-y-4 border-b p-5">
+      <div className="space-y-4 px-4 pt-4 pb-5 lg:px-5 lg:pt-2">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-[10px] font-semibold tracking-[0.16em] text-muted-foreground">

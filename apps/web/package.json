@@ -12,6 +12,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@applemusic-like-lyrics/core": "0.6.0",
+    "@applemusic-like-lyrics/react": "0.6.0",
     "@base-ui/react": "^1.8.0",
     "@jp-learn/content": "workspace:*",
     "@jp-learn/shared": "workspace:*",

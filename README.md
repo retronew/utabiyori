@@ -57,18 +57,20 @@ API 的公共入口通过 `types` 条件供 TypeScript 解析源码，`source` �
 
 前端使用 Tailwind CSS 4 和 [coss ui](https://coss.com/ui)，组件基于 Base UI，源码放在 `apps/web/src/components/ui`。布局、交互状态和响应式样式主要使用 class；`index.css` 只保留主题变量、全局样式与减少动态效果规则。来源与许可见 [第三方声明](THIRD_PARTY_NOTICES.md)。
 
-桌面采用侧栏、曲库列表与练习区域分栏，歌词列表独立滚动，底部统一播放器提供变速、跳转、音量和逐句循环。手机通过「曲库 / 正在练习」切换工作区。账号连接放在弹窗里；切换页面不会卸载音频，网易云与本地音频互斥播放。
+桌面采用连续侧栏与整块主工作区，曲库和页头融入同一画布，通过排版与留白组织内容。歌词保留封面流体背景；底部播放器在工作区内居中，使用半透明表面与集中阴影形成悬浮层次，不遮挡歌词或内容。手机通过「曲库 / 正在练习」切换工作区。账号连接放在弹窗里；切换页面不会卸载音频，网易云与本地音频互斥播放。
 
 搜索结果和正在练习的歌曲可通过爱心收藏，「我的收藏」保存在当前浏览器的 `utabiyori:music-favorites:v1`，不向网易云账号同步，也不保存票据或音频地址。再次打开收藏时重新搜索并匹配歌曲 ID，获取新的播放权限；下架或无法匹配时保留收藏并提示。
 
-歌词发光沿当前演唱进度移动，并平滑居中跟随。优先使用官方逐字时间；接口未授权或歌曲没有数据时，标注「句级近似进度」。罗马音和翻译使用更大的学习字号。播放时封面背景以三层独立色块流动，暂停或隐藏练习区域后保留画面；系统减少动态效果时保持静态。在页面空白区域按空格播放 / 暂停；输入框、可编辑区域、按钮、滑块、选择器和打开的弹窗保留原有键盘行为，组合键、长按和输入法组合输入不触发播放。
+歌词发光沿当前演唱进度移动，并平滑居中跟随。优先使用官方逐字时间；接口未授权或歌曲没有数据时，使用 AMLL 的句级歌词并标注「句级跟随」。罗马音和翻译使用更大的学习字号。播放时封面背景使用 AMLL MeshGradient 流体渲染，暂停或隐藏练习区域后保留画面；系统减少动态效果时保持静态。在页面空白区域按空格播放 / 暂停；输入框、可编辑区域、按钮、滑块、选择器和打开的弹窗保留原有键盘行为，组合键、长按和输入法组合输入不触发播放。
 
-本地音频和网易云歌曲默认使用 Signalsmith Stretch 的 WASM / AudioWorklet 保音高变速，可在底部「变速音质」中切换「高品质 / 原生」。首次播放需要读取并解码音频，跨域、兼容性或内存不足时自动回退并提示。时间轴、权限边界及验证方式见 [音频播放说明](docs/audio-playback.md)。
+网易云播放器提供标准、极高、无损和 Hi-Res 音质选择，并展示供应商实际返回的档位、编码和码率。音质可用性取决于会员、版权与歌曲资源；切换后恢复位置与播放状态。它与「变速处理」选项分开。
+
+本地音频和网易云歌曲默认使用 Signalsmith Stretch 的 WASM / AudioWorklet 保音高变速，可在底部「变速处理」中切换「高品质 / 原生」。首次播放需要读取并解码音频，跨域、兼容性或内存不足时自动回退并提示。时间轴、权限边界及验证方式见 [音频播放说明](docs/audio-playback.md)。
 
 右上角「外观设置」支持浅色、深色、跟随系统，提供玫瑰、紫罗兰、海蓝、森林、琥珀五种预设主题色，也可通过颜色选择器或 HEX 自定义。主题色会按界面明暗调整明度，并选择按钮文字颜色。设置保存在 localStorage 的 `utabiyori:appearance:v1`，与课程进度独立。
 
-布局参考 [Cider](https://github.com/ciderapp/Cider) 和 [Apple Music Web Clone](https://github.com/nhicung/apple-music-clone)，没有使用它们的源码或素材。
-背景的色块流动与暂停行为参考 [Apple Music Like Lyrics](https://github.com/amll-dev/applemusic-like-lyrics) 的视觉思路，采用自行实现的封面图层、CSS 遮罩和位移动画；没有引入其 WebGL / Canvas 渲染器或源码，也没有实现跟随音频低频的律动。
+应用框架参考 Codex 的连续侧栏、整块画布与悬浮操作区；音乐布局参考 [shadcn/ui 的 inset 侧栏](https://ui.shadcn.com/docs/components/base/sidebar)、[Cider](https://github.com/ciderapp/Cider) 和 [Apple Music Web Clone](https://github.com/nhicung/apple-music-clone)，没有使用这些布局参考的源码或素材；基础控件仍使用现有 coss ui。
+歌词和流体背景接入 [Apple Music Like Lyrics](https://github.com/amll-dev/applemusic-like-lyrics) 0.6.0。AMLL 负责显示与动效；音频、权限和慢速 DSP 由现有播放器负责。翻译与罗马音仍来自网易云，键盘定位和阅读可通过「歌词列表」进行。能力边界、格式转换及 AGPL 许可说明见 [AMLL 接入](docs/amll.md)。背景没有实现音频低频律动。
 
 ## 第一版功能
 

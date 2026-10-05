@@ -101,3 +101,5 @@ export function validLoop(
     end <= duration
   )
 }
+export { MUSIC_QUALITIES, isMusicQuality } from '#music-quality'
+export type { MusicQuality } from '#music-quality'

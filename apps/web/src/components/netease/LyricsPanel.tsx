@@ -1,18 +1,26 @@
+import { lazy, Suspense } from 'react'
 import { AudioLines, Music2, RefreshCw, Heart } from 'lucide-react'
 
 import type { MusicSong, TimedLine, MusicPlayback, MusicLyrics } from '#music'
-import { getLineRange } from '#lib/music-playback'
 import type { LineRange } from '#lib/music-playback'
 import { Button } from '#components/ui/button'
 import { Switch } from '#components/ui/switch'
 import { Label } from '#components/ui/label'
-import { LyricProgressText } from '#components/netease/LyricProgressText'
+import { LyricsTranscript } from '#components/netease/LyricsTranscript'
+import type { LyricsTranscriptProps } from '#components/netease/LyricsTranscript'
+import { LyricsTranscriptDialog } from '#components/netease/LyricsTranscriptDialog'
+import { MusicVisualBoundary } from '#components/netease/MusicVisualBoundary'
 import { ScrollArea } from '#components/ui/scroll-area'
 import { Artwork } from '#components/Artwork'
 import { MusicAtmosphere } from '#components/netease/MusicAtmosphere'
-import { useLyricFollow } from '#hooks/use-lyric-follow'
 import { cn } from '#lib/utils'
 import { formatTime } from '#lib/media'
+
+const AmllLyrics = lazy(() =>
+  import('#components/netease/AmllLyrics').then((module) => ({
+    default: module.AmllLyrics,
+  })),
+)
 
 interface LyricsPanelProps {
   className?: string
@@ -67,25 +75,20 @@ export function LyricsPanel({
   onSeekLine,
   onRetry,
 }: LyricsPanelProps) {
-  const { lyricButtons, onManualScroll, resetManualScroll } = useLyricFollow({
-    lineIndex,
-    visible,
-    lines,
-    layoutKey: className,
-    showRomaji,
-    showTranslation,
-  })
   const focused = lines[lineIndex]
   const range = lineRange(lineIndex)
-  const sweepRange = getLineRange(
+  const transcriptProps = {
     lines,
     lineIndex,
-    (selected?.duration ?? 0) / 1000,
-  )
+    showRomaji,
+    showTranslation,
+    lineRange,
+    onSeekLine,
+  } satisfies LyricsTranscriptProps
   return (
     <div
       className={cn(
-        'relative isolate flex min-h-0 flex-1 flex-col overflow-clip bg-[#3b343b] text-white',
+        'relative isolate flex min-h-0 flex-1 flex-col overflow-clip rounded-[14px] bg-[#3b343b] text-white',
         className,
       )}
     >
@@ -122,7 +125,7 @@ export function LyricsPanel({
               <Heart className={cn('size-5', favorite && 'fill-current')} />
             </Button>
           </div>
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-y border-white/10 px-6 py-3 text-xs text-white/65 xl:px-8">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 px-5 py-2 text-xs text-white/80 md:px-6 xl:px-8">
             <Label className="text-white/80">
               <Switch
                 checked={showRomaji}
@@ -145,17 +148,18 @@ export function LyricsPanel({
                   focused.words?.length
                     ? '网易云官方提供的逐字时间轴。'
                     : wordTiming === 'restricted'
-                      ? '当前开放应用未获逐字歌词接口权限，按句级时间轴近似推进。'
+                      ? '当前开放应用未获逐字歌词接口权限，使用官方逐行时间轴跟随。'
                       : wordTiming === 'unavailable'
-                        ? '逐字歌词暂时无法获取，按句级时间轴近似推进。'
-                        : '歌曲没有可用的逐字时间，按句级时间轴近似推进。'
+                        ? '逐字歌词暂时无法获取，使用官方逐行时间轴跟随。'
+                        : '歌曲没有可用的逐字时间，使用官方逐行时间轴跟随。'
                 }
                 className="text-[11px]"
               >
-                {focused.words?.length ? '逐字进度' : '句级近似进度'}
+                {focused.words?.length ? '逐字进度' : '句级跟随'}
               </span>
             )}
-            <span className="ml-auto">
+            <LyricsTranscriptDialog {...transcriptProps} />
+            <span>
               {playback?.trial
                 ? '试听 ' +
                   formatTime(playback.trial.start) +
@@ -189,110 +193,63 @@ export function LyricsPanel({
                 </Button>
               </div>
             ) : (
-              <p role="status" className="text-[10px] text-white/40">
+              <p role="status" className="text-[11px] text-white/70">
                 {notice}
               </p>
             )}
           </div>
-          <ScrollArea
-            className="flex-1"
-            scrollFade
-            onWheel={onManualScroll}
-            onTouchMove={onManualScroll}
-          >
-            <div className="space-y-1 px-3 py-[var(--lyric-edge-space,25vh)] xl:px-5">
-              {lines.map(
-                (line, index) =>
-                  line.text && (
-                    <Button
-                      variant="ghost"
-                      key={line.time + '-' + index}
-                      ref={(node) => {
-                        if (node) lyricButtons.current.set(index, node)
-                        else lyricButtons.current.delete(index)
-                      }}
-                      data-line-index={index}
-                      aria-current={index === lineIndex ? 'true' : undefined}
-                      onClick={() => {
-                        resetManualScroll()
-                        onSeekLine(index)
-                      }}
-                      className={cn(
-                        'group block h-auto w-full origin-left rounded-xl px-3 py-5 text-left whitespace-normal transition-[color,transform,filter,background-color] duration-500 hover:bg-white/5 focus-visible:ring-white/60 sm:h-auto xl:px-3 motion-reduce:transform-none',
-                        index === lineIndex
-                          ? 'scale-100 text-white'
-                          : 'scale-[0.97] text-white/50',
-                        playback?.trial &&
-                          !lineRange(index).available &&
-                          'opacity-60',
-                      )}
-                    >
-                      <time className="mb-1.5 block text-[9px] font-medium tabular-nums opacity-50">
-                        {formatTime(line.time)}
-                        {playback?.trial &&
-                          !lineRange(index).available &&
-                          ' · 试听范围外'}
-                      </time>
-                      <span
-                        lang="ja"
-                        className={cn(
-                          'block text-[28px] leading-[1.5] font-bold tracking-tight md:text-[32px] xl:text-[36px]',
-                          index !== lineIndex &&
-                            'blur-[0.3px] group-hover:blur-none',
-                        )}
-                      >
-                        {index === lineIndex ? (
-                          <LyricProgressText
-                            key={index}
-                            text={line.text}
-                            words={line.words}
-                            start={sweepRange.start}
-                            end={line.end ?? sweepRange.end}
-                            current={current}
-                            playing={playing}
-                            visible={visible}
-                            readTime={readTime}
-                          />
-                        ) : (
-                          line.text
-                        )}
-                      </span>
-                      {showRomaji && line.romaji && (
-                        <span
-                          className={cn(
-                            'mt-3 block text-base leading-relaxed font-medium md:text-lg xl:text-xl',
-                            index === lineIndex
-                              ? 'text-white/90'
-                              : 'text-white/65',
-                          )}
-                        >
-                          {line.romaji}
-                        </span>
-                      )}
-                      {showTranslation && line.translation && (
-                        <span
-                          className={cn(
-                            'mt-1.5 block text-[17px] leading-relaxed md:text-lg xl:text-xl',
-                            index === lineIndex
-                              ? 'text-white/85'
-                              : 'text-white/65',
-                          )}
-                        >
-                          {line.translation}
-                        </span>
-                      )}
-                    </Button>
-                  ),
-              )}
-              {!lines.some((line) => line.text) && (
-                <div className="px-3 py-14 text-sm text-white/50">
-                  {notice || '正在载入歌词…'}
-                </div>
-              )}
-            </div>
-          </ScrollArea>
-          <div className="flex items-center gap-2 border-t border-white/10 px-6 py-3 text-[10px] text-white/40 xl:px-8">
+          <div className="min-h-0 flex-1">
+            {lines.some((line) => line.text) ? (
+              <MusicVisualBoundary
+                key={selected.id}
+                fallback={
+                  <ScrollArea className="h-full">
+                    <div className="bg-background p-5 text-foreground">
+                      <p role="status" className="mb-4 text-sm">
+                        歌词动效无法加载，已切换到可操作的歌词列表。
+                      </p>
+                      <LyricsTranscript {...transcriptProps} />
+                    </div>
+                  </ScrollArea>
+                }
+              >
+                <Suspense
+                  fallback={
+                    <p role="status" className="p-6 text-sm text-white/70">
+                      正在加载歌词动效…
+                    </p>
+                  }
+                >
+                  <AmllLyrics
+                    lines={lines}
+                    duration={selected.duration / 1000}
+                    current={current}
+                    readTime={readTime}
+                    visible={visible}
+                    playing={playing}
+                    showRomaji={showRomaji}
+                    showTranslation={showTranslation}
+                    onSeekLine={onSeekLine}
+                  />
+                </Suspense>
+              </MusicVisualBoundary>
+            ) : (
+              <p role="status" className="px-6 py-14 text-sm text-white/70">
+                {notice || '正在载入歌词…'}
+              </p>
+            )}
+          </div>
+          <div className="flex items-center gap-2 px-5 py-3 text-[10px] text-white/65 md:px-6 xl:px-8">
             <AudioLines className="size-3.5" />
+            <a
+              href="https://github.com/retronew/utabiyori"
+              target="_blank"
+              rel="noreferrer"
+              title="项目源码与 AMLL AGPL-3.0-only 许可说明"
+              className="shrink-0 rounded text-white/65 hover:text-white focus-visible:ring-white/60"
+            >
+              AMLL · 源码
+            </a>
             {loop && focused?.text
               ? '逐句循环 · ' +
                 formatTime(range.start) +

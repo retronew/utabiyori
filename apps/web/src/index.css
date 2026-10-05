@@ -55,6 +55,11 @@
   --ring: #e74762;
   --sidebar: #f6f6f8;
   --player: #fbfbfc;
+  --shadow-workspace:
+    0 0 0 1px oklch(0 0 0 / 0.025), 0 2px 8px oklch(0 0 0 / 0.025);
+  --shadow-dock:
+    0 0 0 1px oklch(0 0 0 / 0.06), 0 1px 2px -1px oklch(0 0 0 / 0.06),
+    0 12px 40px -12px oklch(0 0 0 / 0.18);
   color-scheme: light;
   font-family: var(--font-sans);
   font-synthesis: none;
@@ -73,6 +78,9 @@
   --input: #41414a;
   --sidebar: #202024;
   --player: #202024;
+  --shadow-workspace: 0 0 0 1px oklch(1 0 0 / 0.05);
+  --shadow-dock:
+    0 0 0 1px oklch(1 0 0 / 0.1), 0 12px 40px -12px oklch(0 0 0 / 0.35);
   color-scheme: dark;
 }
 @layer base {
@@ -113,17 +121,5 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
-  }
-}
-
-@keyframes music-flow {
-  0% {
-    transform: translate(-18%, -12%) rotate(-24deg) scale(1.05);
-  }
-  50% {
-    transform: translate(22%, 16%) rotate(18deg) scale(1.25);
-  }
-  100% {
-    transform: translate(-8%, 26%) rotate(42deg) scale(0.95);
   }
 }

@@ -2,11 +2,6 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { mergeLyrics, parseLrc } from '#music'
 import { parseWordLyrics } from '@jp-learn/shared'
-import {
-  lyricCharacterProgress,
-  lyricCharacterTimings,
-  lyricProgress,
-} from '#lib/lyric-progress'
 
 test('LRC supports repeated timestamps, fractional seconds, offsets, and silent boundaries', () => {
   const rows = parseLrc(
@@ -89,22 +84,6 @@ test('word timeline retains romaji, word-aligned translation, and silence withou
     romaji: undefined,
   })
   assert.equal(rows.length, 2)
-})
-
-test('progress respects nonuniform word timing, gaps, seeking, and grapheme boundaries', () => {
-  const chars = lyricCharacterTimings('が好き', 10, 14, [
-    { text: 'が', start: 10, end: 11 },
-    { text: '好き', start: 13, end: 14 },
-  ])
-  assert.equal(chars.length, 3)
-  assert.equal(lyricCharacterProgress(10.5, chars[0]).fill, 0.5)
-  assert.equal(lyricCharacterProgress(12, chars[1]).fill, 0)
-  assert.equal(lyricCharacterProgress(13.25, chars[1]).fill, 0.5)
-  assert.equal(lyricCharacterProgress(13.25, chars[0]).glow, 0)
-  assert.equal(lyricCharacterProgress(9, chars[0]).fill, 0)
-  assert.equal(lyricCharacterProgress(15, chars[2]).fill, 1)
-  assert.equal(lyricProgress(Infinity, 1, 2), 0)
-  assert.equal(lyricProgress(1, 2, 2), 0)
 })
 
 test('partial word data does not discard later usable line lyrics', () => {

@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
+import { MUSIC_QUALITIES } from '@jp-learn/shared'
+import type { MusicQuality } from '@jp-learn/shared'
 import { mergeLyrics } from '#music'
 import type { MusicSong, TimedLine, MusicPlayback, MusicLyrics } from '#music'
 import type { PlayerControlsProps } from '#components/PlayerControls'
@@ -37,6 +39,9 @@ export function useNeteasePractice() {
   const [lines, setLines] = useState<TimedLine[]>([])
   const [wordTiming, setWordTiming] = useState<MusicLyrics['wordTiming']>()
   const [playback, setPlayback] = useState<MusicPlayback | null>(null)
+  const [streamQuality, setStreamQuality] = useState<MusicQuality>('standard')
+  const [streamBusy, setStreamBusy] = useState(false)
+  const resumeStream = useRef<{ time: number; playing: boolean } | null>(null)
   const [current, setCurrent] = useState(0)
   const [lineIndex, setLineIndex] = useState(0)
   const [loop, setLoop] = useState(false)
@@ -64,6 +69,8 @@ export function useNeteasePractice() {
       setSearchBusy(false)
       setFavoriteBusy(false)
       setPlayback(null)
+      setStreamBusy(false)
+      resumeStream.current = null
       setLoop(false)
     },
     onWebConnected: () => {
@@ -111,6 +118,8 @@ export function useNeteasePractice() {
     }
   }
   async function selectSong(song: MusicSong) {
+    setStreamBusy(false)
+    resumeStream.current = null
     setFavoriteBusy(false)
     finishReport()
     audio.current?.pause()
@@ -140,7 +149,12 @@ export function useNeteasePractice() {
         controller.signal,
       ),
       requestMusic<MusicPlayback>(
-        { action: 'playback', songId: song.id, ticket: song.ticket },
+        {
+          action: 'playback',
+          songId: song.id,
+          ticket: song.ticket,
+          quality: streamQuality,
+        },
         controller.signal,
       ),
     ])
@@ -172,6 +186,50 @@ export function useNeteasePractice() {
           ? stream.reason.message
           : '播放地址获取失败。',
       )
+  }
+  async function changeStreamQuality(value: MusicQuality) {
+    if (value === streamQuality) return
+    const previousQuality = streamQuality
+    setStreamQuality(value)
+    if (!selected || !playback) return
+    activeRequest.current?.abort()
+    const controller = new AbortController()
+    activeRequest.current = controller
+    const version = ++requestVersion.current
+    setStreamBusy(true)
+    setError('')
+    try {
+      const nextPlayback = await requestMusic<MusicPlayback>(
+        {
+          action: 'playback',
+          songId: selected.id,
+          ticket: selected.ticket,
+          quality: value,
+        },
+        controller.signal,
+      )
+      if (controller.signal.aborted || version !== requestVersion.current)
+        return
+      if (nextPlayback.url === playback.url) {
+        setPlayback(nextPlayback)
+        return
+      }
+      resumeStream.current = {
+        time: audio.current.currentTime,
+        playing: !audio.current.paused,
+      }
+      finishReport()
+      audio.current.pause()
+      setMediaReady(false)
+      setPlayback(nextPlayback)
+    } catch (e) {
+      if (!controller.signal.aborted && version === requestVersion.current) {
+        setStreamQuality(previousQuality)
+        setError(e instanceof Error ? e.message : '切换网易云音质失败。')
+      }
+    } finally {
+      if (version === requestVersion.current) setStreamBusy(false)
+    }
   }
   async function selectFavorite(song: FavoriteSong) {
     if (!account.loggedIn) {
@@ -290,7 +348,12 @@ export function useNeteasePractice() {
       onLoadedMetadata: () => {
         const media = audio.current
         if (!media || !playback || !selected) return
-        media.currentTime = playback.trial?.start ?? 0
+        const resume = resumeStream.current
+        resumeStream.current = null
+        media.currentTime = Math.max(
+          playback.trial?.start ?? 0,
+          Math.min(resume?.time ?? 0, playback.trial?.end ?? media.duration),
+        )
         media.playbackRate = rate
         media.volume = volume
         setMediaDuration(
@@ -300,6 +363,10 @@ export function useNeteasePractice() {
         )
         setCurrent(media.currentTime)
         setMediaReady(true)
+        if (resume?.playing)
+          void media
+            .play()
+            .catch(() => setError('切换音质后未能继续播放，请点击播放重试。'))
       },
       onTimeUpdate: trackTime,
       onSeeking: () => {
@@ -363,6 +430,12 @@ export function useNeteasePractice() {
   )
   const playerProps = {
     ...qualityProps,
+    streamQuality,
+    streamQualityDisabled: streamBusy || !playback,
+    streamQualityNotice: playback
+      ? `网易云实际音质：${MUSIC_QUALITIES.find((item) => item.value === playback.quality)?.label ?? '供应商未标注'}${playback.codec ? ` · ${playback.codec}` : ''}${playback.bitrate ? ` · ${Math.round(playback.bitrate)} kbps` : ''}${playback.quality && playback.quality !== streamQuality ? '（所选档位不可用，已由网易云降级）' : ''}`
+      : '',
+    onStreamQualityChange: (value) => void changeStreamQuality(value),
     title: selected?.name,
     subtitle: selected?.artists,
     cover: selected?.cover,

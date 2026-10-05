@@ -29,20 +29,20 @@ export default function App() {
   }
   return (
     <PlayerProvider>
-      <div className="grid h-dvh grid-cols-[minmax(0,1fr)] grid-rows-[auto_minmax(0,1fr)_auto] overflow-clip bg-background md:grid-cols-[188px_minmax(0,1fr)] md:grid-rows-[minmax(0,1fr)_auto]">
+      <div className="grid h-dvh grid-cols-[minmax(0,1fr)] grid-rows-[auto_minmax(0,1fr)] overflow-clip bg-sidebar p-2 md:grid-cols-[188px_minmax(0,1fr)] md:grid-rows-[minmax(0,1fr)] md:p-3">
         <AppSidebar
           tab={tab}
           songCount={practice.songs.length}
           learned={practice.learned}
           onTabChange={navigate}
         />
-        <main className="flex min-h-0 min-w-0 flex-col overflow-clip">
+        <main className="relative isolate flex min-h-0 min-w-0 flex-col overflow-clip rounded-[18px] bg-card shadow-[var(--shadow-workspace)]">
           <AppHeader
             tab={tab}
             learned={practice.learned}
             total={practice.total}
           />
-          <div className="relative flex min-h-0 flex-1 flex-col">
+          <div className="relative flex min-h-0 flex-1 flex-col overflow-clip">
             <NeteasePractice visible={tab === 'music'} />
             <div
               hidden={tab !== 'local'}
@@ -81,12 +81,12 @@ export default function App() {
               </p>
             )}
           </div>
+          <PlayerDock
+            id="player-dock"
+            aria-label="播放器"
+            className="z-30 mx-2 mt-3 mb-2 min-h-[92px] w-[calc(100%-1rem)] max-w-[1040px] self-center rounded-[20px] bg-player/95 pb-[env(safe-area-inset-bottom)] shadow-[var(--shadow-dock)] backdrop-blur-2xl sm:mx-5 sm:mb-4 sm:w-[calc(100%-2.5rem)]"
+          />
         </main>
-        <PlayerDock
-          id="player-dock"
-          aria-label="播放器"
-          className="z-30 min-h-[92px] border-t bg-player/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl md:col-span-2"
-        />
       </div>
     </PlayerProvider>
   )

@@ -8,6 +8,8 @@ import {
   Volume2,
   VolumeX,
 } from 'lucide-react'
+import { MUSIC_QUALITIES, isMusicQuality } from '@jp-learn/shared'
+import type { MusicQuality } from '@jp-learn/shared'
 import { Button } from '#components/ui/button'
 import { Slider } from '#components/ui/slider'
 import {
@@ -53,6 +55,10 @@ export interface PlayerControlsProps {
   activeQuality?: PlaybackQuality
   qualityNotice?: string
   onQualityChange?: (value: PlaybackQuality) => void
+  streamQuality?: MusicQuality
+  streamQualityDisabled?: boolean
+  streamQualityNotice?: string
+  onStreamQualityChange?: (value: MusicQuality) => void
 }
 export function PlayerControls({
   title,
@@ -84,6 +90,10 @@ export function PlayerControls({
   activeQuality,
   qualityNotice,
   onQualityChange,
+  streamQuality,
+  streamQualityDisabled,
+  streamQualityNotice,
+  onStreamQualityChange,
 }: PlayerControlsProps) {
   usePlaybackShortcut(onToggle, Boolean(disabled || (loading && !playing)))
   const maximum = upper ?? duration
@@ -162,7 +172,7 @@ export function PlayerControls({
             {playing ? (
               <Pause className="size-6 fill-current" />
             ) : (
-              <Play className="size-6 fill-current" />
+              <Play className="size-6 translate-x-0.5 fill-current" />
             )}
           </Button>
           <Button
@@ -211,7 +221,7 @@ export function PlayerControls({
             >
               <SelectTrigger
                 size="sm"
-                aria-label="变速音质"
+                aria-label="变速处理"
                 className="h-7 min-h-0 w-[68px] min-w-0 gap-1 border-0 bg-transparent px-1.5 text-[11px] shadow-none sm:w-[76px] sm:gap-1.5 sm:text-xs [&_svg]:size-3"
               >
                 <SelectValue />
@@ -223,6 +233,39 @@ export function PlayerControls({
             </Select>
           )}
         </div>
+        {onStreamQualityChange && (
+          <div className="flex max-w-full flex-wrap items-center justify-center gap-x-2 gap-y-1">
+            <Select
+              items={MUSIC_QUALITIES}
+              value={streamQuality}
+              disabled={streamQualityDisabled}
+              onValueChange={(value) => {
+                if (isMusicQuality(value)) onStreamQualityChange(value)
+              }}
+            >
+              <SelectTrigger
+                size="sm"
+                aria-label="网易云音质"
+                className="h-6 min-h-0 w-24 text-[11px]"
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectPopup alignItemWithTrigger={false}>
+                {MUSIC_QUALITIES.map((item) => (
+                  <SelectItem key={item.value} value={item.value}>
+                    {item.label}
+                  </SelectItem>
+                ))}
+              </SelectPopup>
+            </Select>
+            <p
+              role="status"
+              className="max-w-full text-center text-[10px] text-muted-foreground"
+            >
+              {streamQualityNotice}
+            </p>
+          </div>
+        )}
         {qualityNotice ? (
           <p
             role="status"

@@ -1,6 +1,6 @@
 import { randomBytes } from 'node:crypto'
 import type { IncomingMessage, ServerResponse } from 'node:http'
-import { parseWordLyrics } from '@jp-learn/shared'
+import { isMusicQuality, parseWordLyrics } from '@jp-learn/shared'
 import { call, configured, MusicError } from '#client'
 import type { Environment } from '#client'
 import { seal, token, unseal } from '#session'
@@ -390,39 +390,56 @@ export default async function handle(
       })
     }
     if (action === 'playback') {
-      delete session.playback
-      save()
+      const quality = body.quality ?? 'standard'
+      if (!isMusicQuality(quality))
+        throw new MusicError('不支持的网易云音质。', 400)
       const song = readSongTicket(body.ticket, id, secret)
       if (!song) throw new MusicError('歌曲信息已过期，请重新搜索。', 400)
+      save()
       let result: Awaited<ReturnType<typeof call>>
       let source: 'official' | 'web' = 'official'
-      try {
-        if (!song.visible)
-          throw new MusicError('当前官方应用没有此歌曲的播放版权。', 403)
-        result = await invoke(`${path}/song/playurl/get/v2`, {
-          songId: id,
-          bitrate: 320,
-        })
-      } catch (error) {
-        if (
-          env.NETEASE_PLAYBACK_PROVIDER !== 'hybrid' ||
-          !(error instanceof MusicError) ||
-          ![300, 403].includes(error.code)
-        )
-          throw error
+      let actualQuality: typeof quality | undefined
+      let codec: string | undefined
+      const loadWeb = async () => {
         try {
           const track = await webPlayback(
             song.originalId,
             session.deviceId,
             ip,
             webLoggedIn ? webSession.web!.cookies : undefined,
+            quality,
           )
-          result = { code: 200, data: track }
+          actualQuality = track.level
+          codec = track.codec
+          source = 'web'
+          return { code: 200, data: track }
         } catch (error) {
           if (error instanceof WebAuthorizationError) clearWeb()
           throw error
         }
-        source = 'web'
+      }
+      if (
+        env.NETEASE_PLAYBACK_PROVIDER === 'hybrid' &&
+        (quality === 'lossless' || quality === 'hires')
+      ) {
+        result = await loadWeb()
+      } else {
+        try {
+          if (!song.visible)
+            throw new MusicError('当前官方应用没有此歌曲的播放版权。', 403)
+          result = await invoke(`${path}/song/playurl/get/v2`, {
+            songId: id,
+            bitrate: quality === 'standard' ? 128 : 320,
+          })
+        } catch (error) {
+          if (
+            env.NETEASE_PLAYBACK_PROVIDER !== 'hybrid' ||
+            !(error instanceof MusicError) ||
+            ![300, 403].includes(error.code)
+          )
+            throw error
+          result = await loadWeb()
+        }
       }
       const data = result.data!
       const messages: Record<string, string> = {
@@ -438,6 +455,15 @@ export default async function handle(
         )
       const url = safeImage(data.url)
       if (!url) throw new MusicError('网易云返回的播放地址不受支持。')
+      const rawBitrate = Number(data.br)
+      const bitrate =
+        Number.isFinite(rawBitrate) && rawBitrate > 0
+          ? rawBitrate > 1000
+            ? rawBitrate / 1000
+            : rawBitrate
+          : undefined
+      if (source === 'official' && bitrate && bitrate <= 320)
+        actualQuality = bitrate >= 256 ? 'exhigh' : 'standard'
       const duration = song.duration
       if (!Number.isFinite(duration) || duration <= 0 || duration > 3600000)
         throw new MusicError('歌曲时长不正确。', 400)
@@ -468,6 +494,9 @@ export default async function handle(
         trial: validTrial,
         expires: session.playback.expires,
         source,
+        quality: actualQuality,
+        bitrate,
+        codec,
       })
     }
     if (action === 'report') {

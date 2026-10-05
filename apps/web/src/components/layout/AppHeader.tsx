@@ -17,7 +17,7 @@ interface AppHeaderProps {
 export function AppHeader({ tab, learned, total }: AppHeaderProps) {
   const tabs = navigationItems()
   return (
-    <header className="flex h-16 shrink-0 items-center justify-between gap-3 border-b px-4 md:px-7">
+    <header className="flex h-16 shrink-0 items-center justify-between gap-3 px-4 md:h-[72px] md:px-6">
       <div>
         <h1 className="text-lg font-bold tracking-tight">
           {tabs.find((item) => item.id === tab)?.label}

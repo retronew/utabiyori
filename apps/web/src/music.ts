@@ -1,4 +1,4 @@
-import type { TimedWord, WordLyricLine } from '@jp-learn/shared'
+import type { MusicQuality, TimedWord, WordLyricLine } from '@jp-learn/shared'
 
 export interface MusicSong {
   id: string
@@ -25,6 +25,9 @@ export interface MusicPlayback {
   url: string
   expires: number
   source: 'official' | 'web'
+  quality?: MusicQuality
+  bitrate?: number
+  codec?: string
   trial?: { start: number; end: number }
 }
 export interface MusicLyrics {
