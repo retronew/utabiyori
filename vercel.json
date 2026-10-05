@@ -2,6 +2,6 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "vite",
   "installCommand": "pnpm install --frozen-lockfile",
-  "buildCommand": "pnpm --filter @jp-learn/web build",
+  "buildCommand": "pnpm --filter @jp-learn/api build && pnpm --filter @jp-learn/web build",
   "outputDirectory": "apps/web/dist"
 }

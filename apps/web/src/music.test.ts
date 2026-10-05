@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { mergeLyrics, parseLrc } from './music.ts'
+import { mergeLyrics, parseLrc } from '#music'
 
 test('LRC supports repeated timestamps, fractional seconds, offsets, and silent boundaries', () => {
   const rows = parseLrc(

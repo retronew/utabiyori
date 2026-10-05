@@ -11,5 +11,8 @@
   "devDependencies": {
     "typescript": "~6.0.2",
     "@types/node": "^24.13.3"
+  },
+  "imports": {
+    "#*": "./src/*.ts"
   }
 }

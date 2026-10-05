@@ -1,1 +1,1 @@
-export { default } from '../apps/api/src/handler.ts'
+export { default } from '@jp-learn/api/handler'

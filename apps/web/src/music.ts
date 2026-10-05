@@ -17,6 +17,24 @@ export interface TimedLine {
   translation?: string
   romaji?: string
 }
+export interface MusicPlayback {
+  url: string
+  expires: number
+  source: 'official' | 'web'
+  trial?: { start: number; end: number }
+}
+export interface MusicLyrics {
+  lyric: string
+  translation: string
+  romaji: string
+  pureMusic: boolean
+  noLyric: boolean
+}
+export interface MusicQr {
+  image: string
+  expires: number
+  kind: 'official' | 'web'
+}
 export class MusicRequestError extends Error {
   status: number
   constructor(message: string, status: number) {

@@ -3,9 +3,9 @@ import assert from 'node:assert/strict'
 import { generateKeyPairSync, sign, verify } from 'node:crypto'
 import { createServer } from 'node:http'
 import { once } from 'node:events'
-import { seal, unseal } from './session.ts'
-import { privateKey, signingContent } from './client.ts'
-import handle from './handler.ts'
+import { seal, unseal } from '#session'
+import { privateKey, signingContent } from '#client'
+import handle from '#handler'
 
 test('RSA signing sorts raw parameter values before transport encoding', () => {
   const keys = generateKeyPairSync('rsa', { modulusLength: 2048 })

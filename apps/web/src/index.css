@@ -1,94 +1,121 @@
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&family=Noto+Serif+JP:wght@400;500;600&display=swap');
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme inline {
+  --font-sans:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC',
+    'Hiragino Sans', 'Microsoft YaHei', sans-serif;
+  --font-heading: var(--font-sans);
+  --font-mono: 'SFMono-Regular', Consolas, monospace;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--foreground);
+  --color-popover: var(--card);
+  --color-popover-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--secondary);
+  --color-accent-foreground: var(--foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-sidebar: var(--sidebar);
+  --color-player: var(--player);
+  --color-destructive: #e11d48;
+  --color-destructive-foreground: #be123c;
+  --color-success: #10b981;
+  --color-success-foreground: #047857;
+  --color-info: #3b82f6;
+  --color-info-foreground: #1d4ed8;
+  --color-warning: #f59e0b;
+  --color-warning-foreground: #b45309;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 10px;
+  --radius-xl: 14px;
+  --radius-2xl: 20px;
+}
 :root {
-  font-family: 'Noto Sans SC', system-ui, sans-serif;
-  color: #353d38;
-  background: #f8f9f6;
+  --background: #fff;
+  --foreground: #25252a;
+  --card: #fff;
+  --primary: #e74762;
+  --primary-foreground: #fff;
+  --secondary: #f0f0f2;
+  --muted: #f5f5f7;
+  --muted-foreground: #77777e;
+  --border: #e8e8ec;
+  --input: #dddde3;
+  --ring: #e74762;
+  --sidebar: #f6f6f8;
+  --player: #fbfbfc;
+  color-scheme: light;
+  font-family: var(--font-sans);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  font-weight: 400;
-  font-size: 14px;
 }
-* {
-  box-sizing: border-box;
+.dark {
+  --background: #18181c;
+  --foreground: #f1f1f4;
+  --card: #242428;
+  --secondary: #303035;
+  --muted: #232327;
+  --muted-foreground: #a1a1aa;
+  --border: #333339;
+  --input: #41414a;
+  --sidebar: #202024;
+  --player: #202024;
+  color-scheme: dark;
 }
-body {
-  margin: 0;
-  min-width: 360px;
-}
-button,
-input,
-select {
-  font: inherit;
-}
-button,
-a,
-label,
-input,
-select {
-  -webkit-tap-highlight-color: transparent;
-}
-button {
-  cursor: pointer;
-}
-button:disabled {
-  cursor: default;
-  opacity: 0.4;
-}
-button:focus-visible,
-a:focus-visible,
-input:focus-visible,
-select:focus-visible,
-.upload:focus-within {
-  outline: 3px solid #96ac86;
-  outline-offset: 4px;
-}
-button {
-  color: inherit;
-}
-a {
-  color: inherit;
-  text-decoration: none;
-}
-button,
-input,
-select {
-  border: 1px solid #dce2d8;
-  border-radius: 8px;
-  background: white;
-}
-button {
-  transition:
-    background 0.15s,
-    border-color 0.15s;
-}
-button:hover:not(:disabled) {
-  border-color: #94a68b;
-}
-input[type='checkbox'] {
-  accent-color: #5d7950;
-}
-h1,
-h2,
-h3,
-p {
-  margin: 0;
-}
-audio {
-  width: 100%;
-  height: 36px;
-  margin-top: 14px;
-}
-small {
-  font-size: 11px;
-}
-::selection {
-  background: #d7e7ca;
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply m-0 min-w-80 bg-background text-foreground;
+  }
+  #root {
+    isolation: isolate;
+  }
+  button,
+  input,
+  select,
+  a {
+    -webkit-tap-highlight-color: transparent;
+  }
+  button:not(:disabled),
+  [role='button']:not([aria-disabled='true']) {
+    cursor: pointer;
+  }
+  a {
+    @apply outline-none focus-visible:ring-2 focus-visible:ring-ring;
+  }
+  ruby {
+    ruby-align: center;
+  }
+  rt {
+    font-size: 0.45em;
+    font-weight: 400;
+  }
+  ::selection {
+    @apply bg-primary/20 text-foreground;
+  }
 }
 @media (prefers-reduced-motion: reduce) {
-  * {
-    transition: none !important;
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
 }

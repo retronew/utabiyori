@@ -1,6 +1,7 @@
+/// <reference path="./vendor.d.ts" />
 import { createHash } from 'node:crypto'
-import { createRequire } from 'node:module'
-import { MusicError } from './client.ts'
+import encrypt from '@neteasecloudmusicapienhanced/api/util/crypto.js'
+import { MusicError } from '#client'
 
 export interface WebCookies {
   MUSIC_U?: string
@@ -10,10 +11,6 @@ interface WebResult {
   code: number
   unikey?: string
   data?: Record<string, any>[]
-}
-const require = createRequire(import.meta.url)
-const encrypt = require('@neteasecloudmusicapienhanced/api/util/crypto.js') as {
-  weapi(data: Record<string, unknown>): Record<string, string>
 }
 export class WebAuthorizationError extends MusicError {
   constructor() {

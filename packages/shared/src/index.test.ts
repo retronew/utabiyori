@@ -1,7 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { completion, progressKey, validLoop, isSong } from './index.ts'
-import type { Song } from './index.ts'
+import { completion, progressKey, validLoop, isSong } from '#index'
+import type { Song } from '#index'
 import { readFileSync } from 'node:fs'
 
 test('import validates nested content and rejects duplicate line IDs', () => {

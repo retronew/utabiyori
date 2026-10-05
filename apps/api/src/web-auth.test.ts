@@ -2,9 +2,9 @@ import { test, mock } from 'node:test'
 import assert from 'node:assert/strict'
 import { createServer } from 'node:http'
 import { once } from 'node:events'
-import handle from './handler.ts'
-import { seal, unseal } from './session.ts'
-import { songTicket } from './song-ticket.ts'
+import handle from '#handler'
+import { seal, unseal } from '#session'
+import { songTicket } from '#song-ticket'
 
 test('web QR keeps playback credentials out of JSON and isolated from the official session; logout clears both', async () => {
   const secret = 'test-session-secret-'.repeat(3)
@@ -132,7 +132,7 @@ test('web QR keeps playback credentials out of JSON and isolated from the offici
 })
 
 test('expired web QR does not call the provider or expose a previous web credential', async () => {
-  const { webPoll } = await import('./web-auth.ts')
+  const { webPoll } = await import('#web-auth')
   const session = {
     deviceId: 'a'.repeat(32),
     webPending: { key: 'old-key', expires: Date.now() - 1000 },

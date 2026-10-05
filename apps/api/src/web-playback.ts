@@ -1,6 +1,6 @@
-import { MusicError } from './client.ts'
-import { webCall } from './web-client.ts'
-import type { WebCookies } from './web-client.ts'
+import { MusicError } from '#client'
+import { webCall } from '#web-client'
+import type { WebCookies } from '#web-client'
 
 interface WebTrack {
   id: number

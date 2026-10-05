@@ -4,13 +4,25 @@
   "type": "module",
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "test": "node --experimental-strip-types --test src/*.test.ts"
+    "test": "node --conditions=source --experimental-strip-types --test src/*.test.ts",
+    "build": "tsc --noEmit && node scripts/build.mjs"
   },
   "devDependencies": {
     "@types/node": "^24.13.3",
+    "esbuild": "^0.28.2",
     "typescript": "~6.0.2"
   },
   "dependencies": {
     "@neteasecloudmusicapienhanced/api": "4.41.0"
+  },
+  "imports": {
+    "#*": "./src/*.ts"
+  },
+  "exports": {
+    "./handler": {
+      "types": "./src/handler.ts",
+      "source": "./src/handler.ts",
+      "default": "./dist/handler.js"
+    }
   }
 }

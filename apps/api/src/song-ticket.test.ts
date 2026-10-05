@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { readSongTicket, songTicket } from './song-ticket.ts'
+import { readSongTicket, songTicket } from '#song-ticket'
 
 test('web playback uses the original ID and duration signed from official search results', () => {
   const id = 'a'.repeat(32),

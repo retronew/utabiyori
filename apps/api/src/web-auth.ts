@@ -1,6 +1,6 @@
-import { MusicError } from './client.ts'
-import { webCall } from './web-client.ts'
-import type { Session } from './session.ts'
+import { MusicError } from '#client'
+import { webCall } from '#web-client'
+import type { Session } from '#session'
 
 export async function webQr(session: Session, ip: string) {
   const result = await webCall(
