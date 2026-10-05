@@ -6,6 +6,7 @@ import '@applemusic-like-lyrics/core/style.css'
 
 import type { TimedLine } from '#music'
 import { toAmllLyrics } from '#lib/amll-lyrics'
+import { MediaClockLyricPlayer } from '#lib/amll-player'
 import { useReducedMotion } from '#hooks/use-reduced-motion'
 import { cn } from '#lib/utils'
 
@@ -67,6 +68,7 @@ export function AmllLyrics({
   return (
     <LyricPlayer
       ref={setPlayer}
+      lyricPlayer={MediaClockLyricPlayer}
       aria-hidden
       lang="ja"
       data-slot="amll-lyrics"

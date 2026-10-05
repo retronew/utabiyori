@@ -20,6 +20,7 @@ import {
   SelectItem,
 } from '#components/ui/select'
 import { Artwork } from '#components/Artwork'
+import { PlayerFullscreenButton } from '#components/PlayerFullscreenButton'
 import { formatTime } from '#lib/media'
 import { cn } from '#lib/utils'
 import type { PlaybackQuality } from '#lib/audio-transport'
@@ -138,7 +139,7 @@ export function PlayerControls({
           </div>
         </div>
       )}
-      <div className="flex min-w-0 flex-col items-center gap-1 lg:min-w-[384px]">
+      <div className="flex min-w-0 flex-col items-center gap-1 lg:min-w-[432px]">
         {title && (
           <p className="max-w-full truncate text-[10px] text-muted-foreground lg:hidden">
             {title}
@@ -202,6 +203,7 @@ export function PlayerControls({
             >
               <SkipForward className="size-4 fill-current" />
             </Button>
+            <PlayerFullscreenButton disabled={!title} />
           </div>
           <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
             <Select

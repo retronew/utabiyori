@@ -148,14 +148,14 @@ export function LyricsPanel({
                   focused.words?.length
                     ? '网易云官方提供的逐字时间轴。'
                     : wordTiming === 'restricted'
-                      ? '当前开放应用未获逐字歌词接口权限，使用官方逐行时间轴跟随。'
+                      ? '未获逐字歌词接口权限。按句起止时间线性显示近似进度，不代表真实字词演唱时间。'
                       : wordTiming === 'unavailable'
-                        ? '逐字歌词暂时无法获取，使用官方逐行时间轴跟随。'
-                        : '歌曲没有可用的逐字时间，使用官方逐行时间轴跟随。'
+                        ? '逐字歌词暂时无法获取。按句起止时间线性显示近似进度，不代表真实字词演唱时间。'
+                        : '按句起止时间线性显示近似进度，不代表真实字词演唱时间。'
                 }
                 className="text-[11px]"
               >
-                {focused.words?.length ? '逐字进度' : '句级跟随'}
+                {focused.words?.length ? '逐字进度' : '句级近似进度'}
               </span>
             )}
             <LyricsTranscriptDialog {...transcriptProps} />

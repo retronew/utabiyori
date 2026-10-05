@@ -6,9 +6,12 @@ import { PlayerControls } from '#components/PlayerControls'
 import { PlayerPortal } from '#components/PlayerSlot'
 import { useNeteasePractice } from '#hooks/use-netease-practice'
 import { useDesktopLayout } from '#hooks/use-desktop-layout'
+import { usePlayerContext } from '#hooks/use-player-slot'
+import { cn } from '#lib/utils'
 
 export default function NeteasePractice({ visible }: { visible: boolean }) {
   const desktop = useDesktopLayout()
+  const { fullscreen } = usePlayerContext()
   const {
     slot,
     account,
@@ -59,7 +62,12 @@ export default function NeteasePractice({ visible }: { visible: boolean }) {
           }}
           className="h-full min-h-0 gap-0"
         >
-          <div className="shrink-0 px-3 pb-3 lg:hidden">
+          <div
+            className={cn(
+              'shrink-0 px-3 pb-3 lg:hidden',
+              fullscreen.active && 'hidden',
+            )}
+          >
             <TabsList aria-label="音乐工作区" className="w-full">
               {(['library', 'lyrics'] as const).map((view) => (
                 <TabsTab key={view} value={view}>
@@ -68,12 +76,21 @@ export default function NeteasePractice({ visible }: { visible: boolean }) {
               ))}
             </TabsList>
           </div>
-          <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)] px-3 lg:grid-cols-[280px_minmax(0,1fr)] lg:pr-4 lg:pl-0 xl:grid-cols-[300px_minmax(0,1fr)]">
+          <div
+            className={cn(
+              'grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)] px-3 lg:grid-cols-[280px_minmax(0,1fr)] lg:pr-4 lg:pl-0 xl:grid-cols-[300px_minmax(0,1fr)]',
+              fullscreen.active && 'grid-cols-[minmax(0,1fr)]! px-0!',
+            )}
+          >
             <TabsPanel
               value="library"
               keepMounted
-              hidden={!desktop && mobileView !== 'library'}
-              inert={!desktop && mobileView !== 'library'}
+              hidden={
+                fullscreen.active || (!desktop && mobileView !== 'library')
+              }
+              inert={
+                fullscreen.active || (!desktop && mobileView !== 'library')
+              }
               className="min-h-0"
             >
               <MusicLibraryPanel
@@ -104,13 +121,16 @@ export default function NeteasePractice({ visible }: { visible: boolean }) {
             <TabsPanel
               value="lyrics"
               keepMounted
-              hidden={!desktop && mobileView !== 'lyrics'}
-              inert={!desktop && mobileView !== 'lyrics'}
+              hidden={!fullscreen.active && !desktop && mobileView !== 'lyrics'}
+              inert={!fullscreen.active && !desktop && mobileView !== 'lyrics'}
               className="min-h-0"
             >
               <LyricsPanel
-                className="h-full"
-                visible={visible && (desktop || mobileView === 'lyrics')}
+                className={cn('h-full', fullscreen.active && 'rounded-none')}
+                visible={
+                  visible &&
+                  (fullscreen.active || desktop || mobileView === 'lyrics')
+                }
                 playing={playing}
                 current={playerProps.current}
                 readTime={readPlaybackTime}
