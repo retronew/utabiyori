@@ -67,7 +67,10 @@ class TestStretch implements StretchPlayback {
   }
   setRate() {}
   setVolume() {}
-  setLoop() {}
+  loop: AudioRange | null = null
+  setLoop(loop: AudioRange | null) {
+    this.loop = loop
+  }
   dispose() {
     this.disposed = true
     this.paused = true
@@ -189,5 +192,56 @@ test('exclusive playback releases decoded DSP buffers without losing the paused 
   assert.equal(native.currentTime, 12)
   assert.equal(transport.paused, true)
   assert.equal(transport.playedSeconds, 5)
+  transport.dispose()
+})
+
+test('native loops poll boundaries without waiting for infrequent media timeupdate events', async () => {
+  const { transport, native } = setup()
+  await transport.setQuality('native')
+  let updates = 0
+  transport.bind(
+    {
+      onTimeUpdate: () => {
+        updates++
+        if (transport.currentTime >= 31) transport.currentTime = 30
+      },
+    },
+    () => {},
+  )
+  transport.setLoop({ start: 30, end: 31 })
+  await transport.play()
+  native.currentTime = 31.05
+  await new Promise((resolve) => setTimeout(resolve, 120))
+  assert.equal(native.currentTime, 30)
+  assert.ok(updates > 0)
+  transport.setLoop(null)
+  const stopped = updates
+  await new Promise((resolve) => setTimeout(resolve, 120))
+  assert.equal(updates, stopped)
+  transport.dispose()
+})
+
+test('DSP line changes apply the new loop before synchronous seek notifications', async () => {
+  const { transport, engines } = setup()
+  transport.setLoop({ start: 14, end: 20 })
+  await transport.play()
+  const engine = engines[0]!
+  assert.deepEqual(engine.loop, { start: 14, end: 20 })
+  let notified = false
+  transport.bind(
+    {
+      onSeeking: () => {
+        notified = true
+        assert.equal(transport.currentTime, 6)
+        assert.deepEqual(engine.loop, { start: 6, end: 10 })
+      },
+    },
+    () => {},
+  )
+  transport.setLoop({ start: 6, end: 10 })
+  transport.currentTime = 6
+  assert.equal(notified, true)
+  transport.setLoop(null)
+  assert.equal(engine.loop, null)
   transport.dispose()
 })

@@ -1,5 +1,6 @@
-import { Music2, Sparkles } from 'lucide-react'
+import { Music2, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 import { Button } from '#components/ui/button'
+import { IconSwap } from '#components/ui/IconSwap'
 import { navigationItems } from '#lib/navigation'
 import type { AppTab } from '#lib/navigation'
 import { cn } from '#lib/utils'
@@ -8,6 +9,8 @@ interface AppSidebarProps {
   tab: AppTab
   songCount: number
   learned: number
+  collapsed: boolean
+  onCollapsedChange: (collapsed: boolean) => void
   onTabChange: (tab: AppTab) => void
 }
 
@@ -15,80 +18,116 @@ export function AppSidebar({
   tab,
   songCount,
   learned,
+  collapsed,
+  onCollapsedChange,
   onTabChange,
 }: AppSidebarProps) {
   const tabs = navigationItems(songCount, learned)
   return (
-    <aside className="flex min-w-0 overflow-clip pb-2 md:flex-col md:pr-3 md:pb-0">
+    <aside
+      className={cn(
+        'flex h-full min-w-0 overflow-clip pb-2 transition-[width] duration-(--fullscreen-duration) ease-(--ease-smooth-out) motion-reduce:transition-none md:w-[188px] md:flex-col md:pr-3 md:pb-0',
+        collapsed && 'md:w-16',
+      )}
+    >
       <a
         href="/"
         aria-label="歌日和首页"
-        className="flex shrink-0 items-center gap-2.5 p-2 md:px-3 md:py-5"
+        className={cn(
+          'hidden shrink-0 items-center gap-2.5 p-2 transition-[padding,gap] duration-(--fullscreen-duration) ease-(--ease-smooth-out) motion-reduce:transition-none md:flex md:px-3 md:py-5',
+          collapsed && 'md:gap-0 md:px-2.5',
+        )}
       >
-        <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+        <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
           <Music2 className="size-5" />
         </span>
-        <span className="hidden text-lg font-bold tracking-tight sm:block">
+        <span
+          className={cn(
+            'hidden max-w-32 overflow-hidden text-lg font-bold whitespace-nowrap tracking-tight transition-[max-width,opacity] duration-(--duration-fast) ease-(--ease-smooth-out) motion-reduce:transition-none sm:block',
+            collapsed && 'md:max-w-0 md:opacity-0',
+          )}
+        >
           歌日和
-          <span className="mt-0.5 block text-[9px] font-medium tracking-[0.17em] text-muted-foreground">
+          <span className="mt-0.5 block text-xs font-medium tracking-[0.17em] text-muted-foreground">
             UTABIYORI
           </span>
         </span>
       </a>
-      <div className="hidden px-3 pt-4 pb-2 text-[10px] font-semibold tracking-widest text-muted-foreground md:block">
-        我的学习空间
-      </div>
       <nav
+        id="app-navigation"
         aria-label="主导航"
-        className="flex min-w-0 flex-1 items-center gap-0.5 overflow-x-auto px-1 md:flex-none md:flex-col md:items-stretch md:px-0"
+        className="grid min-w-0 flex-1 grid-cols-4 items-center gap-1 md:flex md:flex-none md:flex-col md:items-stretch"
       >
         {tabs.map((item) => (
           <Button
             key={item.id}
             variant="ghost"
+            static
             onClick={() => {
               onTabChange(item.id)
             }}
             aria-label={item.label}
+            title={collapsed ? item.label : undefined}
             aria-current={tab === item.id ? 'page' : undefined}
             className={cn(
-              'h-10 justify-start gap-2 rounded-lg px-2 text-xs sm:text-sm md:px-3',
+              'h-9 min-w-0 justify-center gap-2 rounded-lg px-1 text-xs sm:text-sm md:h-9 md:justify-start md:px-3',
+              'transition-[padding,gap,background-color,color] duration-(--duration-fast) ease-(--ease-smooth-out) motion-reduce:transition-none',
+              collapsed && 'md:gap-0 md:px-5',
               tab === item.id &&
                 'bg-primary/10 text-primary hover:bg-primary/15',
             )}
           >
             <item.icon className="size-4 shrink-0 max-sm:hidden" />
-            <span>{item.label}</span>
+            <span
+              className={cn(
+                'max-w-32 overflow-hidden whitespace-nowrap transition-[max-width,opacity] duration-(--duration-fast) ease-(--ease-smooth-out) motion-reduce:transition-none',
+                collapsed && 'md:max-w-0 md:opacity-0',
+              )}
+            >
+              {item.label}
+            </span>
             {item.count !== undefined && (
-              <span className="ml-auto hidden text-[10px] tabular-nums opacity-70 md:block">
+              <span
+                aria-hidden
+                className={cn(
+                  'ml-auto hidden max-w-10 overflow-hidden text-xs tabular-nums opacity-70 transition-[max-width,opacity] duration-(--duration-fast) motion-reduce:transition-none md:block',
+                  collapsed && 'md:max-w-0 md:opacity-0',
+                )}
+              >
                 {item.count}
               </span>
             )}
           </Button>
         ))}
       </nav>
-      <div className="mt-auto hidden px-3 py-4 md:block">
-        <div className="mb-6 pt-5">
-          <Sparkles className="mb-2 size-4 text-primary" />
-          <p className="text-xs font-medium">今天，先唱好一句。</p>
-          <p className="mt-1.5 text-[11px] leading-relaxed text-muted-foreground">
-            从喜欢的声音开始，
-            <br />
-            慢慢认识眼前的假名。
-          </p>
-        </div>
-        <div className="flex items-center gap-2.5">
-          <span className="flex size-8 items-center justify-center rounded-full bg-card text-xs font-semibold">
-            初
-          </span>
-          <span className="text-xs font-medium">
-            日语学习者
-            <small className="mt-0.5 block text-[10px] font-normal text-muted-foreground">
-              学习进度保存在本机
-            </small>
-          </span>
-        </div>
-      </div>
+      <Button
+        variant="ghost"
+        static
+        aria-label={collapsed ? '展开侧栏' : '收起侧栏'}
+        title={collapsed ? '展开侧栏' : '收起侧栏'}
+        aria-expanded={!collapsed}
+        aria-controls="app-navigation"
+        onClick={() => onCollapsedChange(!collapsed)}
+        className={cn(
+          'mt-auto mb-3 hidden h-9 shrink-0 justify-start gap-2 px-3 text-xs text-muted-foreground transition-[padding,gap,background-color,color] duration-(--duration-fast) ease-(--ease-smooth-out) motion-reduce:transition-none md:flex',
+          collapsed && 'md:gap-0 md:px-5',
+        )}
+      >
+        <IconSwap
+          className="-mx-0.5 size-4"
+          active={collapsed}
+          initial={<PanelLeftClose className="size-4" />}
+          alternate={<PanelLeftOpen className="size-4" />}
+        />
+        <span
+          className={cn(
+            'max-w-32 overflow-hidden whitespace-nowrap transition-[max-width,opacity] duration-(--duration-fast) motion-reduce:transition-none',
+            collapsed && 'max-w-0 opacity-0',
+          )}
+        >
+          收起侧栏
+        </span>
+      </Button>
     </aside>
   )
 }

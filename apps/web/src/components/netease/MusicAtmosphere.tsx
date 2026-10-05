@@ -45,7 +45,7 @@ export function MusicAtmosphere({
           </Suspense>
         </MusicVisualBoundary>
       )}
-      <div className="absolute inset-0 bg-linear-to-b from-black/35 via-black/30 to-black/50" />
+      <div className="absolute inset-0 bg-linear-to-b from-black/65 via-black/65 to-black/70" />
     </div>
   )
 }

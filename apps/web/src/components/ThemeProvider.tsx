@@ -28,6 +28,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   useLayoutEffect(() => {
     const root = document.documentElement
     const palette = themePalette(settings.color, dark)
+    root.setAttribute('data-theme-changing', '')
     root.classList.toggle('dark', dark)
     root.style.setProperty('--primary', palette.primary)
     root.style.setProperty('--primary-foreground', palette.foreground)
@@ -35,6 +36,15 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     document
       .querySelector('meta[name="theme-color"]')
       ?.setAttribute('content', dark ? '#18181c' : '#ffffff')
+    // Flush the new palette before restoring interactive transitions.
+    void root.offsetHeight
+    const frame = requestAnimationFrame(() =>
+      root.removeAttribute('data-theme-changing'),
+    )
+    return () => {
+      cancelAnimationFrame(frame)
+      root.removeAttribute('data-theme-changing')
+    }
   }, [settings.color, dark])
   return (
     <ThemeContext.Provider

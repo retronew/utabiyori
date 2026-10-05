@@ -9,7 +9,7 @@ import { useExclusiveAudio } from '#hooks/use-exclusive-audio'
 import { useNeteaseAccount } from '#hooks/use-netease-account'
 import { usePlaybackReport } from '#hooks/use-playback-report'
 import { announceAudio } from '#lib/audio-events'
-import { getLineRange } from '#lib/music-playback'
+import { getLineRange, getPlaybackStep } from '#lib/music-playback'
 import { AudioTransport } from '#lib/audio-transport'
 import { useAudioPlayback } from '#hooks/use-audio-playback'
 import { useMusicFavorites } from '#hooks/use-music-favorites'
@@ -34,14 +34,17 @@ export function useNeteasePractice() {
   const [searchBusy, setSearchBusy] = useState(false)
   const [favoriteBusy, setFavoriteBusy] = useState(false)
   const [error, setError] = useState('')
+  const [searchError, setSearchError] = useState('')
   const [notice, setNotice] = useState('')
   const [selected, setSelected] = useState<MusicSong | null>(null)
   const [lines, setLines] = useState<TimedLine[]>([])
+  const [lyricsLoading, setLyricsLoading] = useState(false)
   const [wordTiming, setWordTiming] = useState<MusicLyrics['wordTiming']>()
   const [playback, setPlayback] = useState<MusicPlayback | null>(null)
   const [streamQuality, setStreamQuality] = useState<MusicQuality>('standard')
   const [streamBusy, setStreamBusy] = useState(false)
   const resumeStream = useRef<{ time: number; playing: boolean } | null>(null)
+  const playbackIntent = useRef(0)
   const [current, setCurrent] = useState(0)
   const [lineIndex, setLineIndex] = useState(0)
   const [loop, setLoop] = useState(false)
@@ -50,7 +53,10 @@ export function useNeteasePractice() {
   const [showTranslation, setShowTranslation] = useState(true)
   const [transport] = useState(() => new AudioTransport())
   const audio = useRef(transport)
-  useExclusiveAudio(audio)
+  useExclusiveAudio(audio, () => {
+    resumeStream.current = null
+    playbackIntent.current++
+  })
   const requestVersion = useRef(0)
   const activeRequest = useRef<AbortController | null>(null)
   const searchRequest = useRef<AbortController | null>(null)
@@ -67,6 +73,7 @@ export function useNeteasePractice() {
       requestVersion.current++
       searchVersion.current++
       setSearchBusy(false)
+      setLyricsLoading(false)
       setFavoriteBusy(false)
       setPlayback(null)
       setStreamBusy(false)
@@ -95,7 +102,7 @@ export function useNeteasePractice() {
     searchRequest.current = controller
     const version = ++searchVersion.current
     setSearchBusy(true)
-    setError('')
+    setSearchError('')
     try {
       const result = await requestMusic<{ songs: MusicSong[]; total: number }>(
         {
@@ -112,12 +119,14 @@ export function useNeteasePractice() {
       setSearched(keyword.trim())
     } catch (e) {
       if (!controller.signal.aborted && version === searchVersion.current)
-        setError(e instanceof Error ? e.message : '搜索失败。')
+        setSearchError(
+          e instanceof Error ? e.message : '搜索失败，请稍后重试。',
+        )
     } finally {
       if (version === searchVersion.current) setSearchBusy(false)
     }
   }
-  async function selectSong(song: MusicSong) {
+  async function selectSong(song: MusicSong, autoPlay = true) {
     setStreamBusy(false)
     resumeStream.current = null
     setFavoriteBusy(false)
@@ -127,8 +136,11 @@ export function useNeteasePractice() {
     const controller = new AbortController()
     activeRequest.current = controller
     const version = ++requestVersion.current
-    announceAudio()
-    slot.activate()
+    if (autoPlay) {
+      announceAudio()
+      slot.activate()
+      resumeStream.current = { time: 0, playing: true }
+    }
     setMobileView('lyrics')
     setMediaReady(false)
     setMediaDuration(0)
@@ -136,6 +148,7 @@ export function useNeteasePractice() {
     setPlaying(false)
     setSelected(song)
     setLines([])
+    setLyricsLoading(true)
     setWordTiming(undefined)
     setPlayback(null)
     setCurrent(0)
@@ -159,6 +172,7 @@ export function useNeteasePractice() {
       ),
     ])
     if (version !== requestVersion.current || controller.signal.aborted) return
+    setLyricsLoading(false)
     const [lyric, stream] = results
     if (lyric.status === 'fulfilled') {
       const data = lyric.value
@@ -180,12 +194,14 @@ export function useNeteasePractice() {
       )
     } else setNotice('歌词暂时无法获取，可以先听歌。')
     if (stream.status === 'fulfilled') setPlayback(stream.value)
-    else
+    else {
+      resumeStream.current = null
       setError(
         stream.reason instanceof Error
           ? stream.reason.message
           : '播放地址获取失败。',
       )
+    }
   }
   async function changeStreamQuality(value: MusicQuality) {
     if (value === streamQuality) return
@@ -238,6 +254,8 @@ export function useNeteasePractice() {
     }
     finishReport()
     audio.current.pause()
+    announceAudio()
+    const intent = playbackIntent.current
     activeRequest.current?.abort()
     const controller = new AbortController()
     activeRequest.current = controller
@@ -257,7 +275,7 @@ export function useNeteasePractice() {
       )
       if (version !== requestVersion.current || controller.signal.aborted)
         return
-      await selectSong(fresh)
+      await selectSong(fresh, intent === playbackIntent.current)
     } catch (error) {
       if (version === requestVersion.current && !controller.signal.aborted)
         setError(
@@ -271,11 +289,11 @@ export function useNeteasePractice() {
     return getLineRange(
       lines,
       index,
-      (selected?.duration || 0) / 1000,
+      mediaDuration || (selected?.duration || 0) / 1000,
       playback?.trial,
     )
   }
-  function seekLine(index: number) {
+  function seekLine(index: number, repeat = loop) {
     const range = lineRange(index)
     setLineIndex(index)
     if (!audio.current || !playback || !range.available) {
@@ -283,6 +301,9 @@ export function useNeteasePractice() {
       return
     }
     updateElapsed()
+    audio.current.setLoop(
+      repeat ? { start: range.start, end: range.end } : null,
+    )
     audio.current.currentTime = range.start
     setCurrent(range.start)
   }
@@ -290,17 +311,17 @@ export function useNeteasePractice() {
     const media = audio.current
     if (!media || !playback) return
     updateElapsed()
-    const lower = playback.trial?.start ?? 0,
-      upper = playback.trial?.end ?? Infinity
-    if (media.currentTime < lower) media.currentTime = lower
-    if (media.currentTime >= upper) {
+    const step = getPlaybackStep(
+      media.currentTime,
+      lineRange(lineIndex),
+      loop,
+      playback.trial,
+    )
+    if (step.ended) {
       media.pause()
-      media.currentTime = lower
       finishReport('playend')
     }
-    const range = lineRange(lineIndex)
-    if (loop && range.available && media.currentTime >= range.end)
-      media.currentTime = range.start
+    if (media.currentTime !== step.position) media.currentTime = step.position
     setCurrent(media.currentTime)
     if (!loop) {
       let found = 0
@@ -363,15 +384,22 @@ export function useNeteasePractice() {
         )
         setCurrent(media.currentTime)
         setMediaReady(true)
-        if (resume?.playing)
-          void media
-            .play()
-            .catch(() => setError('切换音质后未能继续播放，请点击播放重试。'))
+        if (resume?.playing) {
+          const version = requestVersion.current
+          void media.play().catch(() => {
+            if (version === requestVersion.current) {
+              setPlaying(false)
+              setBuffering(false)
+              setError('未能自动播放，请点击播放重试。')
+            }
+          })
+        }
       },
       onTimeUpdate: trackTime,
       onSeeking: () => {
         updateElapsed()
-        trackTime()
+        // A DSP seek is synchronous; React has not committed the target line yet.
+        setCurrent(audio.current.currentTime)
       },
       onRateChange: () => {
         if (!audio.current) return
@@ -405,11 +433,24 @@ export function useNeteasePractice() {
         suspendReport()
       },
       onEnded: () => {
+        const media = audio.current
+        const range = lineRange(lineIndex)
+        if (loop && playback && range.available) {
+          media.currentTime = range.start
+          setCurrent(range.start)
+          void media.play().catch(() => {
+            setPlaying(false)
+            setBuffering(false)
+            setError('单句循环未能继续，请点击播放重试。')
+          })
+          return
+        }
         setPlaying(false)
         setBuffering(false)
         finishReport('playend')
       },
       onError: () => {
+        resumeStream.current = null
         setMediaReady(false)
         setPlaying(false)
         setBuffering(false)
@@ -459,7 +500,7 @@ export function useNeteasePractice() {
     onVolume: setVolume,
     onLoop: () => {
       setLoop(!loop)
-      seekLine(lineIndex)
+      seekLine(lineIndex, !loop)
     },
     previousDisabled: previous === undefined,
     nextDisabled: next === undefined,
@@ -476,6 +517,7 @@ export function useNeteasePractice() {
     if (!open) account.cancelQr()
   }
   return {
+    searchError,
     ...favorites,
     selectFavorite,
     slot,
@@ -511,5 +553,6 @@ export function useNeteasePractice() {
     playerProps,
     readPlaybackTime: () => audio.current.currentTime,
     wordTiming,
+    lyricsLoading,
   }
 }

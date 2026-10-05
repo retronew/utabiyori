@@ -36,7 +36,7 @@ export function DialogBackdrop({
   return (
     <DialogPrimitive.Backdrop
       className={cn(
-        'fixed inset-0 z-50 bg-black/32 backdrop-blur-sm transition-all duration-200 data-ending-style:opacity-0 data-starting-style:opacity-0',
+        'fixed inset-0 z-50 bg-black/32 backdrop-blur-sm transition-opacity duration-(--duration-fast) data-ending-style:duration-(--duration-quick) data-ending-style:opacity-0 data-starting-style:opacity-0',
         className,
       )}
       data-slot="dialog-backdrop"
@@ -52,7 +52,7 @@ export function DialogViewport({
   return (
     <DialogPrimitive.Viewport
       className={cn(
-        'fixed inset-0 z-50 grid grid-rows-[1fr_auto_3fr] justify-items-center p-4',
+        'fixed inset-0 z-50 grid grid-rows-[1fr_auto_3fr] justify-items-center overscroll-contain p-4',
         className,
       )}
       data-slot="dialog-viewport"
@@ -86,7 +86,7 @@ export function DialogPopup({
       >
         <DialogPrimitive.Popup
           className={cn(
-            'relative row-start-2 flex max-h-full min-h-0 w-full min-w-0 max-w-lg origin-center flex-col rounded-2xl border bg-popover not-dark:bg-clip-padding text-popover-foreground opacity-[calc(1-var(--nested-dialogs))] shadow-lg/5 outline-none transition-[scale,opacity,translate] duration-200 ease-in-out will-change-transform before:pointer-events-none before:absolute before:inset-0 before:rounded-[calc(var(--radius-2xl)-1px)] before:shadow-[0_1px_--theme(--color-black/4%)] data-ending-style:opacity-0 data-starting-style:opacity-0 sm:scale-[calc(1-0.1*var(--nested-dialogs))] sm:data-ending-style:scale-98 sm:data-starting-style:scale-98 dark:before:shadow-[0_-1px_--theme(--color-white/6%)]',
+            'relative row-start-2 flex max-h-full min-h-0 w-full min-w-0 max-w-lg origin-center flex-col rounded-2xl border bg-popover not-dark:bg-clip-padding text-popover-foreground opacity-[calc(1-var(--nested-dialogs))] shadow-lg/5 outline-none transition-[scale,opacity,translate] duration-(--duration-fast) ease-(--ease-smooth-out) data-ending-style:duration-(--duration-quick) will-change-transform before:pointer-events-none before:absolute before:inset-0 before:rounded-[calc(var(--radius-2xl)-1px)] before:shadow-[0_1px_--theme(--color-black/4%)] data-ending-style:opacity-0 data-starting-style:opacity-0 sm:scale-[calc(1-0.1*var(--nested-dialogs))] sm:data-ending-style:scale-[0.96] sm:data-starting-style:scale-[0.96] motion-reduce:scale-100 motion-reduce:translate-none dark:before:shadow-[0_-1px_--theme(--color-white/6%)]',
             bottomStickOnMobile &&
               'max-sm:max-w-none max-sm:origin-bottom max-sm:rounded-none max-sm:border-x-0 max-sm:border-t max-sm:border-b-0 max-sm:data-ending-style:translate-y-4 max-sm:data-starting-style:translate-y-4 max-sm:before:hidden max-sm:before:rounded-none',
             className,
@@ -97,7 +97,7 @@ export function DialogPopup({
           {children}
           {showCloseButton && (
             <DialogPrimitive.Close
-              aria-label="Close"
+              aria-label="关闭弹窗"
               className="absolute end-2 top-2"
               render={<Button size="icon" variant="ghost" />}
               {...closeProps}
@@ -118,7 +118,7 @@ export function DialogHeader({
 }: useRender.ComponentProps<'div'>): React.ReactElement {
   const defaultProps = {
     className: cn(
-      'flex flex-col gap-2 p-6 in-[[data-slot=dialog-popup]:has([data-slot=dialog-panel])]:pb-3 max-sm:pb-4',
+      'flex shrink-0 flex-col gap-2 p-6 pe-14 in-[[data-slot=dialog-popup]:has([data-slot=dialog-panel])]:pb-3 max-sm:pb-4',
       className,
     ),
     'data-slot': 'dialog-header',
@@ -164,7 +164,7 @@ export function DialogTitle({
   return (
     <DialogPrimitive.Title
       className={cn(
-        'font-heading font-semibold text-xl leading-none',
+        'font-heading font-semibold text-xl leading-snug text-balance',
         className,
       )}
       data-slot="dialog-title"
@@ -179,7 +179,10 @@ export function DialogDescription({
 }: DialogPrimitive.Description.Props): React.ReactElement {
   return (
     <DialogPrimitive.Description
-      className={cn('text-muted-foreground text-sm', className)}
+      className={cn(
+        'text-muted-foreground text-sm leading-relaxed text-pretty',
+        className,
+      )}
       data-slot="dialog-description"
       {...props}
     />

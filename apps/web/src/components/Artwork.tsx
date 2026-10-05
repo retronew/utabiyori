@@ -17,7 +17,7 @@ export function Artwork({
   return (
     <div
       className={cn(
-        'relative isolate shrink-0 overflow-hidden rounded-xl bg-linear-to-br from-primary/25 via-primary/10 to-primary/5',
+        'relative isolate shrink-0 overflow-hidden rounded-xl outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10 bg-linear-to-br from-primary/25 via-primary/10 to-primary/5',
         theme === 'sage' && 'from-emerald-200 via-teal-100 to-lime-50',
         theme === 'peach' && 'from-orange-200 via-amber-100 to-rose-100',
         theme === 'lavender' && 'from-violet-200 via-purple-100 to-blue-100',

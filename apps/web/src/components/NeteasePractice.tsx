@@ -1,3 +1,4 @@
+import { useRef } from 'react'
 import { Tabs, TabsList, TabsTab, TabsPanel } from '#components/ui/tabs'
 import { MusicLibraryPanel } from '#components/netease/MusicLibraryPanel'
 import { LyricsPanel } from '#components/netease/LyricsPanel'
@@ -10,6 +11,7 @@ import { usePlayerContext } from '#hooks/use-player-slot'
 import { cn } from '#lib/utils'
 
 export default function NeteasePractice({ visible }: { visible: boolean }) {
+  const accountTrigger = useRef<HTMLButtonElement>(null)
   const desktop = useDesktopLayout()
   const { fullscreen } = usePlayerContext()
   const {
@@ -37,6 +39,7 @@ export default function NeteasePractice({ visible }: { visible: boolean }) {
     setShowTranslation,
     loop,
     error,
+    searchError,
     notice,
     search,
     selectSong,
@@ -50,6 +53,7 @@ export default function NeteasePractice({ visible }: { visible: boolean }) {
     selectFavorite,
     readPlaybackTime,
     wordTiming,
+    lyricsLoading,
   } = useNeteasePractice()
   const { ready, loggedIn, webLoggedIn, hybrid, qr, qrStatus } = account
   return (
@@ -64,36 +68,45 @@ export default function NeteasePractice({ visible }: { visible: boolean }) {
         >
           <div
             className={cn(
-              'shrink-0 px-3 pb-3 lg:hidden',
-              fullscreen.active && 'hidden',
+              'grid shrink-0 grid-rows-[1fr] px-3 transition-[grid-template-rows,opacity] duration-(--fullscreen-duration) ease-(--ease-smooth-out) motion-reduce:transition-none lg:hidden',
+              fullscreen.active &&
+                'pointer-events-none grid-rows-[0fr] opacity-0',
             )}
+            inert={fullscreen.active}
+            aria-hidden={fullscreen.active || undefined}
           >
-            <TabsList aria-label="音乐工作区" className="w-full">
-              {(['library', 'lyrics'] as const).map((view) => (
-                <TabsTab key={view} value={view}>
-                  {view === 'library' ? '曲库' : '正在练习'}
-                </TabsTab>
-              ))}
-            </TabsList>
+            <div className="min-h-0 overflow-clip">
+              <TabsList aria-label="音乐工作区" className="mb-3 w-full">
+                {(['library', 'lyrics'] as const).map((view) => (
+                  <TabsTab key={view} value={view}>
+                    {view === 'library' ? '曲库' : '正在练习'}
+                  </TabsTab>
+                ))}
+              </TabsList>
+            </div>
           </div>
           <div
             className={cn(
-              'grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)] px-3 lg:grid-cols-[280px_minmax(0,1fr)] lg:pr-4 lg:pl-0 xl:grid-cols-[300px_minmax(0,1fr)]',
-              fullscreen.active && 'grid-cols-[minmax(0,1fr)]! px-0!',
+              'grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)] px-3 transition-[grid-template-columns,padding] duration-(--fullscreen-duration) ease-(--ease-smooth-out) motion-reduce:transition-none lg:grid-cols-[280px_minmax(0,1fr)] lg:pr-4 lg:pl-0 xl:grid-cols-[300px_minmax(0,1fr)]',
+              fullscreen.active && 'px-0! lg:grid-cols-[0px_minmax(0,1fr)]!',
             )}
           >
             <TabsPanel
               value="library"
               keepMounted
               hidden={
-                fullscreen.active || (!desktop && mobileView !== 'library')
+                !desktop && (fullscreen.active || mobileView !== 'library')
               }
               inert={
                 fullscreen.active || (!desktop && mobileView !== 'library')
               }
-              className="min-h-0"
+              className={cn(
+                'min-h-0 min-w-0 overflow-clip transition-opacity duration-(--duration-fast) motion-reduce:transition-none',
+                fullscreen.active && 'pointer-events-none opacity-0',
+              )}
             >
               <MusicLibraryPanel
+                accountTrigger={accountTrigger}
                 className="h-full"
                 ready={ready}
                 loggedIn={loggedIn}
@@ -104,7 +117,7 @@ export default function NeteasePractice({ visible }: { visible: boolean }) {
                 songs={songs}
                 favorites={favorites}
                 favoritesError={favoritesError}
-                error={error}
+                error={searchError || error}
                 onFavorite={toggleFavorite}
                 onSelectFavorite={(song) => void selectFavorite(song)}
                 selectedId={selected?.id}
@@ -126,6 +139,7 @@ export default function NeteasePractice({ visible }: { visible: boolean }) {
               className="min-h-0"
             >
               <LyricsPanel
+                loading={lyricsLoading}
                 className={cn('h-full', fullscreen.active && 'rounded-none')}
                 visible={
                   visible &&
@@ -166,6 +180,8 @@ export default function NeteasePractice({ visible }: { visible: boolean }) {
       </section>
 
       <AccountDialog
+        qrBusy={account.qrBusy}
+        returnFocus={accountTrigger}
         open={accountOpen}
         ready={ready}
         loggedIn={loggedIn}

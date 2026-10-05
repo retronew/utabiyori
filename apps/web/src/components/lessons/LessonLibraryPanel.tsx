@@ -28,9 +28,7 @@ export function LessonLibraryPanel({
     <section className="flex min-h-0 flex-col border-b bg-muted/25 lg:border-r lg:border-b-0">
       <div className="flex items-center justify-between px-5 pt-5 pb-3">
         <h2 className="text-sm font-semibold">我的练习曲</h2>
-        <span className="text-[10px] text-muted-foreground">
-          {songs.length} 首
-        </span>
+        <span className="text-xs text-muted-foreground">{songs.length} 首</span>
       </div>
       <ScrollArea className="min-h-0 flex-1">
         <div className="px-3 pb-3">
@@ -52,19 +50,19 @@ export function LessonLibraryPanel({
               />
               <span className="min-w-0 flex-1">
                 <strong
-                  className="block truncate text-sm font-semibold"
+                  className="block break-words text-sm leading-snug font-semibold"
                   lang="ja"
                 >
                   {item.title}
                 </strong>
-                <span className="mt-1 block text-[10px] font-normal text-muted-foreground">
+                <span className="mt-1 block text-xs font-normal text-muted-foreground">
                   {builtInSongs.some((s) => s.id === item.id)
                     ? '原创练习'
                     : '我的练习'}{' '}
                   · {item.lines.length} 句
                 </span>
               </span>
-              <span className="text-[10px] font-normal text-muted-foreground">
+              <span className="text-xs font-normal text-muted-foreground">
                 {completion(item, progress)}%
               </span>
             </Button>
@@ -78,7 +76,7 @@ export function LessonLibraryPanel({
           render={<a href="/lesson-template.json" download />}
         >
           <Download className="size-3.5" />
-          示例
+          下载示例
         </Button>
         <Button
           variant="outline"

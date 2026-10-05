@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { Sun, Moon, Monitor, Palette, Check, RotateCcw } from 'lucide-react'
 import { Button } from '#components/ui/button'
 import { Input } from '#components/ui/input'
@@ -7,11 +7,10 @@ import {
   DialogPopup,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
 } from '#components/ui/dialog'
 import { useTheme } from '#hooks/use-theme'
 import { cn } from '#lib/utils'
-import { defaultTheme, normalizeColor, themeColors } from '#lib/theme'
+import { contrast, defaultTheme, normalizeColor, themeColors } from '#lib/theme'
 import type { ThemeMode } from '#lib/theme'
 
 const modes: { value: ThemeMode; label: string; icon: typeof Sun }[] = [
@@ -24,9 +23,11 @@ export function AppearanceSettings() {
   const [open, setOpen] = useState(false)
   const [draft, setDraft] = useState(settings.color)
   const customColor = normalizeColor(draft)
+  const trigger = useRef<HTMLButtonElement>(null)
   return (
     <>
       <Button
+        ref={trigger}
         variant="ghost"
         size="icon-sm"
         aria-label="外观设置"
@@ -39,18 +40,16 @@ export function AppearanceSettings() {
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogPopup
+          finalFocus={trigger}
           closeProps={{ 'aria-label': '关闭外观设置' }}
           className="max-w-md"
         >
           <DialogHeader>
             <DialogTitle>外观设置</DialogTitle>
-            <DialogDescription>
-              选择适合你的界面，让每次练习都更舒服。
-            </DialogDescription>
           </DialogHeader>
-          <div className="space-y-6 overflow-y-auto px-6 pb-6">
+          <div className="min-h-0 space-y-4 overflow-y-auto overscroll-contain px-6 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
             <fieldset>
-              <legend className="mb-3 text-xs font-semibold">明暗模式</legend>
+              <legend className="mb-2 text-xs font-semibold">明暗模式</legend>
               <div className="grid grid-cols-3 gap-2">
                 {modes.map((mode) => (
                   <Button
@@ -59,7 +58,7 @@ export function AppearanceSettings() {
                     aria-pressed={settings.mode === mode.value}
                     onClick={() => update({ mode: mode.value })}
                     className={cn(
-                      'h-auto flex-col gap-2 py-4 sm:h-auto',
+                      'h-auto flex-col gap-2 py-3 sm:h-auto',
                       settings.mode === mode.value &&
                         'border-primary/50 bg-primary/8 text-primary',
                     )}
@@ -69,15 +68,15 @@ export function AppearanceSettings() {
                   </Button>
                 ))}
               </div>
-              <p className="mt-2.5 text-[11px] text-muted-foreground">
+              <p className="mt-2.5 text-xs text-muted-foreground">
                 {settings.mode === 'system'
                   ? `当前跟随系统使用${dark ? '深色' : '浅色'}模式。`
-                  : '切换立即生效，刷新后保留。'}
+                  : '切换后自动保存。'}
               </p>
             </fieldset>
             <fieldset>
-              <legend className="mb-3 text-xs font-semibold">主题颜色</legend>
-              <div className="flex justify-between gap-2">
+              <legend className="mb-2 text-xs font-semibold">主题颜色</legend>
+              <div className="grid grid-cols-5 gap-1">
                 {themeColors.map((item) => (
                   <Button
                     variant="ghost"
@@ -88,10 +87,16 @@ export function AppearanceSettings() {
                       setDraft(item.color)
                       update({ color: item.color })
                     }}
-                    className="h-auto flex-col gap-2 rounded-lg p-1.5 sm:h-auto"
+                    className="h-auto flex-col gap-1.5 rounded-lg p-1.5 sm:h-auto"
                   >
                     <span
-                      style={{ backgroundColor: item.color }}
+                      style={{
+                        backgroundColor: item.color,
+                        color:
+                          contrast(item.color, '#ffffff') >= 4.5
+                            ? '#ffffff'
+                            : '#000000',
+                      }}
                       className={cn(
                         'flex size-9 items-center justify-center rounded-full border border-black/10 text-white',
                         settings.color === item.color &&
@@ -102,7 +107,7 @@ export function AppearanceSettings() {
                         <Check className="size-4 drop-shadow" />
                       )}
                     </span>
-                    <span className="text-[10px] text-muted-foreground">
+                    <span className="text-xs text-muted-foreground">
                       {item.name}
                     </span>
                   </Button>
@@ -115,6 +120,10 @@ export function AppearanceSettings() {
                 if (customColor) {
                   setDraft(customColor)
                   update({ color: customColor })
+                } else {
+                  event.currentTarget
+                    .querySelector<HTMLInputElement>('#theme-custom-hex')
+                    ?.focus()
                 }
               }}
             >
@@ -144,20 +153,26 @@ export function AppearanceSettings() {
                   spellCheck={false}
                   onChange={(event) => setDraft(event.target.value)}
                   aria-invalid={!customColor}
+                  aria-describedby="theme-color-help"
                   className="font-mono"
                 />
-                <Button type="submit" disabled={!customColor}>
-                  应用
-                </Button>
+                <Button type="submit">应用</Button>
               </div>
-              <p className="mt-2 text-[11px] leading-5 text-muted-foreground">
+              <p
+                id="theme-color-help"
+                role={!customColor ? 'alert' : undefined}
+                className="mt-2 text-xs leading-5 text-muted-foreground"
+              >
                 {!customColor
                   ? '请输入 HEX 颜色，例如 #8b5cf6 或 #abc。'
-                  : '界面会适度调整颜色明度，让文字与按钮保持清晰。'}
+                  : '颜色将自动适配明暗模式。'}
               </p>
             </form>
-            <div className="flex items-center justify-between border-t pt-4">
-              <p className="text-[11px] text-muted-foreground">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t pt-4">
+              <p
+                role="status"
+                className="text-xs leading-relaxed text-muted-foreground"
+              >
                 {persistenceError
                   ? '暂时无法保存设置，本次仍可使用。'
                   : '设置保存在当前浏览器。'}

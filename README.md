@@ -71,6 +71,8 @@ API 的公共入口通过 `types` 条件供 TypeScript 解析源码，`source` �
 
 右上角「外观设置」支持浅色、深色、跟随系统，提供玫瑰、紫罗兰、海蓝、森林、琥珀五种预设主题色，也可通过颜色选择器或 HEX 自定义。主题色会按界面明暗调整明度，并选择按钮文字颜色。设置保存在 localStorage 的 `utabiyori:appearance:v1`，与课程进度独立。
 
+手机导航完整展示四个入口，原创课程通过「选择课程 / 逐句练习」切换，当前句的朗读与掌握操作位于阅读列表前。手机底部播放器直接提供播放、切句和循环，「播放设置」展开速度、变速处理、网易云音质与全屏操作；歌词手动滚动后可选择「回到当前句」。字号、点击范围、键盘操作和动效约定见 [界面与交互](docs/interface.md)。
+
 应用框架参考 Codex 的连续侧栏、整块画布与悬浮操作区；音乐布局参考 [shadcn/ui 的 inset 侧栏](https://ui.shadcn.com/docs/components/base/sidebar)、[Cider](https://github.com/ciderapp/Cider) 和 [Apple Music Web Clone](https://github.com/nhicung/apple-music-clone)，没有使用这些布局参考的源码或素材；基础控件仍使用现有 coss ui。
 歌词和流体背景接入 [Apple Music Like Lyrics](https://github.com/amll-dev/applemusic-like-lyrics) 0.6.0。AMLL 负责显示与动效；音频、权限和慢速 DSP 由现有播放器负责。翻译与罗马音仍来自网易云，键盘定位和阅读可通过「歌词列表」进行。能力边界、格式转换及 AGPL 许可说明见 [AMLL 接入](docs/amll.md)。背景没有实现音频低频律动。
 

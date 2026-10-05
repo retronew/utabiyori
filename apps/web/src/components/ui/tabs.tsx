@@ -47,7 +47,7 @@ export function TabsList({
         'relative z-0 flex w-fit items-center justify-center gap-x-0.5 text-muted-foreground',
         'data-[orientation=vertical]:flex-col',
         variant === 'default'
-          ? 'rounded-lg bg-muted p-0.5 text-muted-foreground/72'
+          ? 'rounded-lg bg-muted p-0.5 text-muted-foreground'
           : 'data-[orientation=vertical]:px-1 data-[orientation=horizontal]:py-1 *:data-[slot=tabs-tab]:hover:bg-accent',
         className,
       )}
@@ -60,7 +60,7 @@ export function TabsList({
       </TabsListContext.Provider>
       <TabsPrimitive.Indicator
         className={cn(
-          'absolute bottom-0 left-0 h-(--active-tab-height) w-(--active-tab-width) translate-x-(--active-tab-left) -translate-y-(--active-tab-bottom) transition-[width,translate] duration-200 ease-in-out',
+          'absolute bottom-0 left-0 h-(--active-tab-height) w-(--active-tab-width) translate-x-(--active-tab-left) -translate-y-(--active-tab-bottom) transition-[width,translate] duration-(--duration-fast) ease-(--ease-smooth-out) motion-reduce:transition-none',
           variant === 'underline'
             ? 'z-10 bg-primary data-[orientation=horizontal]:h-0.5 data-[orientation=vertical]:w-0.5 data-[orientation=vertical]:-translate-x-px data-[orientation=horizontal]:translate-y-px'
             : '-z-1 rounded-md bg-background shadow-sm/5 dark:bg-input',
@@ -102,7 +102,10 @@ export function TabsPanel({
 }: TabsPrimitive.Panel.Props): React.ReactElement {
   return (
     <TabsPrimitive.Panel
-      className={cn('flex-1 outline-none', className)}
+      className={cn(
+        'min-w-0 flex-1 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring',
+        className,
+      )}
       data-slot="tabs-content"
       {...props}
     />

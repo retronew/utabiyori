@@ -27,15 +27,15 @@ export function LoopEditor({
   onToggleLoop,
 }: LoopEditorProps) {
   return (
-    <div className="mt-6 rounded-2xl border p-5 md:p-6">
-      <div className="flex items-center gap-2">
+    <div className="mt-4 rounded-2xl border p-4">
+      <div className="flex flex-wrap items-center gap-2">
         <Scissors className="size-4 text-primary" />
         <h3 className="text-sm font-semibold">截取练习片段</h3>
         <span className="ml-auto text-xs tabular-nums text-muted-foreground">
           {formatTime(start)} — {formatTime(end)}
         </span>
       </div>
-      <div className="mt-5 grid gap-4 sm:grid-cols-2">
+      <div className="mt-3 grid gap-3 sm:grid-cols-2">
         <div>
           <label
             htmlFor="loop-start"
@@ -51,6 +51,8 @@ export function LoopEditor({
               max={duration}
               step={0.1}
               value={start}
+              aria-invalid={!isValid && duration > 0}
+              aria-describedby="loop-range-help"
               onChange={(event) => {
                 onStartChange(Number(event.target.value))
               }}
@@ -81,6 +83,8 @@ export function LoopEditor({
               max={duration}
               step={0.1}
               value={end}
+              aria-invalid={!isValid && duration > 0}
+              aria-describedby="loop-range-help"
               onChange={(event) => {
                 onEndChange(Number(event.target.value))
               }}
@@ -97,7 +101,7 @@ export function LoopEditor({
           </div>
         </div>
       </div>
-      <div className="mt-5 flex flex-wrap items-center gap-4">
+      <div className="mt-3 flex flex-wrap items-center gap-4">
         <Button
           disabled={!isValid}
           variant={loop ? 'secondary' : 'default'}
@@ -107,7 +111,11 @@ export function LoopEditor({
           <Repeat2 className="size-4" />
           {loop ? '停止片段循环' : '循环这个片段'}
         </Button>
-        <p role="status" className="text-xs text-muted-foreground">
+        <p
+          id="loop-range-help"
+          role="status"
+          className="text-sm leading-relaxed text-muted-foreground"
+        >
           {!isValid && duration > 0
             ? '终点需大于起点，且在音频时长内。'
             : loop

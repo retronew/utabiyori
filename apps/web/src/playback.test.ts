@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { getLineRange } from '#lib/music-playback'
+import { getLineRange, getPlaybackStep } from '#lib/music-playback'
 import { formatTime } from '#lib/media'
 
 const lines = [
@@ -54,4 +54,48 @@ test('media time formatting safely handles unavailable and negative durations', 
   assert.equal(formatTime(Infinity), '0:00')
   assert.equal(formatTime(-1), '0:00')
   assert.equal(formatTime(61.9), '1:01')
+})
+
+test('a clipped line repeats at the trial boundary instead of ending playback', () => {
+  const trial = { start: 6, end: 8 }
+  const range = getLineRange(lines, 0, 20, trial)
+  for (const time of [8, 8.3])
+    assert.deepEqual(getPlaybackStep(time, range, true, trial), {
+      position: 6,
+      ended: false,
+    })
+  assert.deepEqual(getPlaybackStep(8, range, false, trial), {
+    position: 6,
+    ended: true,
+  })
+})
+
+test('last-line loops rewind at the real media end and reject unavailable trial lines', () => {
+  const range = getLineRange(lines, 3, 18)
+  assert.deepEqual(getPlaybackStep(18, range, true), {
+    position: 14,
+    ended: false,
+  })
+  const trial = { start: 6, end: 12 }
+  const unavailable = getLineRange(lines, 3, 18, trial)
+  assert.deepEqual(getPlaybackStep(12, unavailable, true, trial), {
+    position: 6,
+    ended: true,
+  })
+})
+
+test('loop seeks stay inside the selected line and ordinary playback retains its position', () => {
+  const range = getLineRange(lines, 3, 20)
+  assert.deepEqual(getPlaybackStep(10, range, true), {
+    position: 14,
+    ended: false,
+  })
+  assert.deepEqual(getPlaybackStep(16, range, true), {
+    position: 16,
+    ended: false,
+  })
+  assert.deepEqual(getPlaybackStep(10, range, false), {
+    position: 10,
+    ended: false,
+  })
 })

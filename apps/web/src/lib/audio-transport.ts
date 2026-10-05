@@ -145,14 +145,19 @@ export class AudioTransport {
     const listeners = Object.entries(events).map(([event, handler]) => {
       const listener = () => {
         if (this.engine || this.pending) return
-        if (handler === 'onPlaying') this.captureNative(true)
+        if (handler === 'onPlaying') {
+          this.captureNative(true)
+          this.startTimer()
+        }
         if (
           handler === 'onPause' ||
           handler === 'onWaiting' ||
           handler === 'onEnded' ||
           handler === 'onError'
-        )
+        ) {
           this.captureNative(false)
+          clearInterval(this.timer)
+        }
         if (handler === 'onRateChange') this.captureNative()
         if (handler === 'onLoadedMetadata')
           media.currentTime = this.bounds?.start ?? 0
@@ -230,6 +235,7 @@ export class AudioTransport {
     if (loop?.start === this.loop?.start && loop?.end === this.loop?.end) return
     this.loop = loop
     this.engine?.setLoop(loop)
+    if (!this.engine && !this.paused) this.startTimer()
   }
 
   private publish() {
@@ -382,8 +388,14 @@ export class AudioTransport {
 
   private startTimer() {
     clearInterval(this.timer)
+    if (!this.engine && !this.loop && !this.bounds) return
     this.timer = setInterval(() => {
-      if (!this.engine || this.engine.paused) return
+      if (!this.engine) {
+        if (this.nativePlaying && !this.media?.paused)
+          this.handlers.onTimeUpdate?.()
+        return
+      }
+      if (this.engine.paused) return
       if (!this.loop && this.currentTime >= this.engine.bounds.end) {
         this.pause()
         this.handlers.onTimeUpdate?.()

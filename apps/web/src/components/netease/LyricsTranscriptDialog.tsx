@@ -13,7 +13,10 @@ import {
 import { LyricsTranscript } from '#components/netease/LyricsTranscript'
 import type { LyricsTranscriptProps } from '#components/netease/LyricsTranscript'
 
-export function LyricsTranscriptDialog(props: LyricsTranscriptProps) {
+export function LyricsTranscriptDialog({
+  songInfo,
+  ...props
+}: LyricsTranscriptProps & { songInfo?: string }) {
   const [open, setOpen] = useState(false)
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -27,14 +30,19 @@ export function LyricsTranscriptDialog(props: LyricsTranscriptProps) {
         }
       >
         <ListMusic className="size-4" />
-        歌词列表
+        <span className="max-sm:sr-only">歌词列表</span>
       </DialogTrigger>
-      <DialogPopup>
+      <DialogPopup closeProps={{ 'aria-label': '关闭歌词列表' }}>
         <DialogHeader>
           <DialogTitle>歌词列表</DialogTitle>
           <DialogDescription>
             阅读原文、罗马音和翻译，按 Tab 选择歌词，按 Enter 定位。
           </DialogDescription>
+          {songInfo && (
+            <p className="text-sm leading-relaxed text-muted-foreground break-words">
+              {songInfo}
+            </p>
+          )}
         </DialogHeader>
         <DialogPanel>
           <LyricsTranscript

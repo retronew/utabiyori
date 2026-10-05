@@ -6,6 +6,24 @@ export interface LineRange {
   available: boolean
 }
 
+export function getPlaybackStep(
+  current: number,
+  range: LineRange,
+  loop: boolean,
+  trial?: MusicPlayback['trial'],
+) {
+  if (
+    loop &&
+    range.available &&
+    (current < range.start || current >= range.end)
+  )
+    return { position: range.start, ended: false }
+  const lower = trial?.start ?? 0
+  if (current >= (trial?.end ?? Infinity))
+    return { position: lower, ended: true }
+  return { position: Math.max(current, lower), ended: false }
+}
+
 export function getLineRange(
   lines: TimedLine[],
   index: number,

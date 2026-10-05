@@ -1,5 +1,6 @@
 import { Maximize, Minimize } from 'lucide-react'
 import { Button } from '#components/ui/button'
+import { IconSwap } from '#components/ui/IconSwap'
 import { usePlayerContext } from '#hooks/use-player-slot'
 
 export function PlayerFullscreenButton({ disabled }: { disabled: boolean }) {
@@ -15,7 +16,11 @@ export function PlayerFullscreenButton({ disabled }: { disabled: boolean }) {
       disabled={fullscreen.pending || (disabled && !fullscreen.active)}
       onClick={(event) => void fullscreen.toggle(event.currentTarget)}
     >
-      {fullscreen.active ? <Minimize /> : <Maximize />}
+      <IconSwap
+        active={fullscreen.active}
+        initial={<Maximize />}
+        alternate={<Minimize />}
+      />
     </Button>
   )
 }

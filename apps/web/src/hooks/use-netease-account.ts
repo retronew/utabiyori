@@ -203,6 +203,7 @@ export function useNeteaseAccount({
     hybrid,
     webLoggedIn,
     busy: qrBusy || disconnectBusy,
+    qrBusy,
     qr,
     qrStatus,
     requestMusic,

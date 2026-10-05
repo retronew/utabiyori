@@ -7,10 +7,16 @@ import {
   SkipForward,
   Volume2,
   VolumeX,
+  SlidersHorizontal,
+  Loader,
 } from 'lucide-react'
+import { useId, useState } from 'react'
+import type { ComponentProps } from 'react'
 import { MUSIC_QUALITIES, isMusicQuality } from '@jp-learn/shared'
 import type { MusicQuality } from '@jp-learn/shared'
 import { Button } from '#components/ui/button'
+import { IconSwap } from '#components/ui/IconSwap'
+import { MarqueeText } from '#components/ui/MarqueeText'
 import { Slider } from '#components/ui/slider'
 import {
   Select,
@@ -21,12 +27,19 @@ import {
 } from '#components/ui/select'
 import { Artwork } from '#components/Artwork'
 import { PlayerFullscreenButton } from '#components/PlayerFullscreenButton'
+import { PlayerStatus } from '#components/PlayerStatus'
 import { formatTime } from '#lib/media'
 import { cn } from '#lib/utils'
 import type { PlaybackQuality } from '#lib/audio-transport'
 import { usePlaybackShortcut } from '#hooks/use-playback-shortcut'
 
 const selectTriggerClassName = 'w-auto min-w-0 text-xs sm:text-xs'
+const playbackSelectPopupProps = {
+  side: 'top',
+  align: 'start',
+  sideOffset: 6,
+  alignItemWithTrigger: false,
+} satisfies ComponentProps<typeof SelectPopup>
 
 export interface PlayerControlsProps {
   title?: string
@@ -98,54 +111,59 @@ export function PlayerControls({
   streamQualityNotice,
   onStreamQualityChange,
 }: PlayerControlsProps) {
+  const [settingsOpen, setSettingsOpen] = useState(false)
+  const settingsId = useId()
   usePlaybackShortcut(onToggle, Boolean(disabled || (loading && !playing)))
   const maximum = upper ?? duration
   const rates = [0.6, 0.75, 0.9, 1].map((value) => ({
     value,
     label: `${value}×`,
   }))
-  const details = [
+  const statusProps = {
+    loading,
+    disabled,
+    quality,
+    activeQuality,
+    qualityNotice,
     streamQualityNotice,
-    activeQuality === 'dsp' ? '保音高变速' : '',
-  ]
-    .filter(Boolean)
-    .join(' · ')
+  } satisfies ComponentProps<typeof PlayerStatus>
   return (
     <div
+      data-slot="player-controls"
       className={cn(
-        'grid min-w-0 grid-cols-[minmax(0,1fr)] items-center gap-3 px-2 py-2 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] lg:gap-4 lg:px-5',
+        'grid min-w-0 grid-cols-[minmax(0,1fr)] items-center gap-2 px-2 py-2 xl:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] xl:gap-4 xl:px-5',
         compact && 'grid-cols-1! px-0! py-0!',
       )}
     >
       {!compact && (
-        <div className="flex min-w-0 items-center gap-3 max-lg:hidden">
-          <Artwork src={cover} className="size-11 rounded-lg" />
-          <div className="min-w-0">
-            <p className="truncate text-[13px] font-semibold">
-              {title || '还没有正在播放的歌曲'}
-            </p>
-            <p className="mt-0.5 truncate text-xs text-muted-foreground">
-              {subtitle || '找到喜欢的声音，从一句开始'}
-            </p>
-            {details && (
-              <p
-                role="status"
-                title={details}
-                className="mt-1 truncate text-[10px] text-muted-foreground"
-              >
-                {details}
-              </p>
-            )}
+        <div className="flex min-w-0 items-center gap-3 max-xl:hidden">
+          <Artwork src={cover} className="size-11 shrink-0 rounded-lg" />
+          <div className="min-w-0 flex-1">
+            <MarqueeText
+              text={title || '未选择歌曲'}
+              className="h-5 text-sm leading-5 font-semibold"
+            />
+            <MarqueeText
+              text={subtitle || ''}
+              className="mt-0.5 h-4 text-xs leading-4 text-muted-foreground"
+            />
           </div>
+          <PlayerStatus {...statusProps} />
         </div>
       )}
-      <div className="flex min-w-0 flex-col items-center gap-1 lg:min-w-[432px]">
-        {title && (
-          <p className="max-w-full truncate text-[10px] text-muted-foreground lg:hidden">
-            {title}
-            {subtitle ? ` · ${subtitle}` : ''}
-          </p>
-        )}
+      <div className="flex min-w-0 flex-col items-center gap-1 xl:min-w-[432px]">
+        <div
+          className={cn(
+            'flex h-5 w-full min-w-0 items-center gap-2 xl:hidden',
+            compact && 'xl:flex',
+          )}
+        >
+          <MarqueeText
+            text={`${title || '未选择歌曲'}${subtitle ? ` · ${subtitle}` : ''}`}
+            className="min-w-0 flex-1 text-xs leading-5 text-muted-foreground"
+          />
+          <PlayerStatus {...statusProps} />
+        </div>
         <div className="flex w-full flex-wrap items-center justify-center gap-x-3 gap-y-1.5">
           <div className="flex shrink-0 items-center gap-1 sm:gap-2">
             <Button
@@ -174,7 +192,14 @@ export function PlayerControls({
             <Button
               variant="ghost"
               size="icon-lg"
-              aria-label={playing ? '暂停播放' : '播放歌曲'}
+              static
+              aria-label={
+                loading && !playing
+                  ? '取消加载'
+                  : playing
+                    ? '暂停播放'
+                    : '播放歌曲'
+              }
               aria-keyshortcuts="Space"
               title="播放 / 暂停（空格）"
               onClick={onToggle}
@@ -182,17 +207,23 @@ export function PlayerControls({
               aria-busy={loading || undefined}
               className="rounded-full text-foreground [&_svg]:opacity-100"
             >
-              {loading ? (
-                <span
-                  className="absolute inset-1.5 animate-spin rounded-full border-2 border-foreground/20 border-t-foreground"
-                  aria-hidden
+              <span className="relative size-6 shrink-0" aria-hidden>
+                <Loader
+                  data-slot="player-loading"
+                  className={cn(
+                    'pointer-events-none absolute inset-0 size-6',
+                    loading ? 'animate-spin' : 'invisible',
+                  )}
                 />
-              ) : null}
-              {playing ? (
-                <Pause className="size-6 fill-current" />
-              ) : (
-                <Play className="size-6 translate-x-0.5 fill-current" />
-              )}
+                <IconSwap
+                  active={playing}
+                  className={cn('size-6', loading && 'invisible')}
+                  initial={
+                    <Play className="size-6 translate-x-0.5 fill-current" />
+                  }
+                  alternate={<Pause className="size-6 fill-current" />}
+                />
+              </span>
             </Button>
             <Button
               variant="ghost"
@@ -203,9 +234,31 @@ export function PlayerControls({
             >
               <SkipForward className="size-4 fill-current" />
             </Button>
-            <PlayerFullscreenButton disabled={!title} />
+            <span className="max-sm:hidden">
+              <PlayerFullscreenButton disabled={!title} />
+            </span>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              className="sm:hidden"
+              aria-label="播放设置"
+              aria-expanded={settingsOpen}
+              aria-controls={settingsId}
+              onClick={() => setSettingsOpen(!settingsOpen)}
+            >
+              <SlidersHorizontal />
+            </Button>
           </div>
-          <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+          <div
+            id={settingsId}
+            className={cn(
+              'flex flex-wrap items-center justify-center gap-1.5 transition-opacity duration-(--duration-fast) starting:opacity-0 sm:gap-2',
+              !settingsOpen && 'max-sm:hidden',
+            )}
+          >
+            <span className="sm:hidden">
+              <PlayerFullscreenButton disabled={!title} />
+            </span>
             <Select
               items={rates}
               value={rate}
@@ -221,7 +274,7 @@ export function PlayerControls({
               >
                 <SelectValue />
               </SelectTrigger>
-              <SelectPopup>
+              <SelectPopup {...playbackSelectPopupProps}>
                 {rates.map((item) => (
                   <SelectItem key={item.value} value={item.value}>
                     {item.label}
@@ -248,7 +301,7 @@ export function PlayerControls({
                 >
                   <SelectValue />
                 </SelectTrigger>
-                <SelectPopup>
+                <SelectPopup {...playbackSelectPopupProps}>
                   <SelectItem value="dsp">高品质 · 保音高</SelectItem>
                   <SelectItem value="native">原生 · 浏览器</SelectItem>
                 </SelectPopup>
@@ -270,7 +323,7 @@ export function PlayerControls({
                 >
                   <SelectValue />
                 </SelectTrigger>
-                <SelectPopup>
+                <SelectPopup {...playbackSelectPopupProps}>
                   {MUSIC_QUALITIES.map((item) => (
                     <SelectItem key={item.value} value={item.value}>
                       {item.label}
@@ -281,16 +334,13 @@ export function PlayerControls({
             )}
           </div>
         </div>
-        {qualityNotice ? (
-          <p
-            role="status"
-            className="max-w-lg text-center text-[10px] text-muted-foreground"
-          >
-            {qualityNotice}
-          </p>
-        ) : null}
-        <div className="flex w-full max-w-lg items-center gap-2.5 text-[10px] tabular-nums text-muted-foreground">
-          <span className="w-8 shrink-0 text-right">{formatTime(current)}</span>
+        <span role="status" className="sr-only">
+          {qualityNotice}
+        </span>
+        <div className="flex w-full max-w-lg items-center gap-2.5 text-xs tabular-nums text-muted-foreground">
+          <span className="w-10 shrink-0 text-right">
+            {formatTime(current)}
+          </span>
           <Slider
             aria-label="播放进度"
             min={lower}
@@ -301,22 +351,13 @@ export function PlayerControls({
             onValueChange={(value) =>
               onSeek(Array.isArray(value) ? value[0]! : value)
             }
-            className="py-2 [&_[data-slot=slider-control]]:min-w-0 [&_[data-slot=slider-thumb]]:size-2.5 [&_[data-slot=slider-indicator]]:bg-foreground/65"
+            className="py-1 [&_[data-slot=slider-control]]:min-w-0 [&_[data-slot=slider-thumb]]:size-3 [&_[data-slot=slider-indicator]]:bg-foreground/65"
           />
-          <span className="w-8 shrink-0">{formatTime(maximum)}</span>
+          <span className="w-10 shrink-0">{formatTime(maximum)}</span>
         </div>
-        {details && (
-          <p
-            role="status"
-            title={details}
-            className="w-full truncate text-center text-[10px] text-muted-foreground lg:hidden"
-          >
-            {details}
-          </p>
-        )}
       </div>
       {!compact && (
-        <div className="flex items-center justify-end gap-3 max-lg:hidden">
+        <div className="flex items-center justify-end gap-3 max-xl:hidden">
           <Button
             variant="ghost"
             size="icon-sm"
@@ -336,7 +377,7 @@ export function PlayerControls({
               onVolume(Array.isArray(value) ? value[0]! : value)
             }
             disabled={disabled}
-            className="w-20! max-xl:hidden [&_[data-slot=slider-control]]:min-w-0 [&_[data-slot=slider-thumb]]:size-2.5 [&_[data-slot=slider-indicator]]:bg-foreground/65"
+            className="w-20! max-xl:hidden py-1 [&_[data-slot=slider-control]]:min-w-0 [&_[data-slot=slider-thumb]]:size-3 [&_[data-slot=slider-indicator]]:bg-foreground/65"
           />
           <Headphones
             className="ml-1 size-4 text-muted-foreground max-xl:hidden"
