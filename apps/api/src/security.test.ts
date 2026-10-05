@@ -92,6 +92,7 @@ test('HTTP gateway rejects cross-origin, unknown actions and malformed song IDs 
       configured: true,
       loggedIn: false,
       hybrid: false,
+      webLoggedIn: false,
     })
   } finally {
     server.close()

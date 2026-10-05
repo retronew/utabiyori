@@ -12,6 +12,11 @@ export interface Token {
 }
 export interface Session {
   deviceId: string
+  web?: {
+    cookies: { MUSIC_U?: string; __csrf?: string }
+    expires: number
+  }
+  webPending?: { key: string; expires: number }
   anonymous?: Token
   user?: Token
   pending?: { key: string; expires: number }

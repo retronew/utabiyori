@@ -6,8 +6,11 @@ import { seal, token, unseal } from './session.ts'
 import type { Session } from './session.ts'
 import { readSongTicket, songTicket } from './song-ticket.ts'
 import { webPlayback } from './web-playback.ts'
+import { webQr, webPoll } from './web-auth.ts'
+import { WebAuthorizationError } from './web-client.ts'
 
 const cookieName = 'utabiyori_ncm'
+const webCookieName = 'utabiyori_ncm_web'
 const buckets = new Map<string, { time: number; count: number }>()
 const path = '/openapi/music/basic'
 const idPattern = /^[a-fA-F0-9]{32}$/
@@ -65,15 +68,47 @@ export default async function handle(
   const session: Session = (rawCookie && unseal(rawCookie, secret)) || {
     deviceId: randomBytes(16).toString('hex'),
   }
-  const save = () =>
-    res.setHeader(
-      'Set-Cookie',
-      `${cookieName}=${seal(session, secret)}; Path=/api/netease; HttpOnly; SameSite=Lax; Max-Age=1728000${env.VERCEL || 'encrypted' in req.socket ? '; Secure' : ''}`,
-    )
+  const webCookie = req.headers.cookie
+    ?.split(';')
+    .map((x) => x.trim())
+    .find((x) => x.startsWith(`${webCookieName}=`))
+    ?.slice(webCookieName.length + 1)
+  const decodedWeb = webCookie && unseal(webCookie, secret)
+  const webSession: Session =
+    decodedWeb && decodedWeb.deviceId === session.deviceId
+      ? decodedWeb
+      : { deviceId: session.deviceId }
+  const webLoggedIn = Boolean(
+    webSession.web?.cookies.MUSIC_U && webSession.web.expires > Date.now(),
+  )
+  const setCookie = (name: string, value: string, maxAge = 1728000) => {
+    const existing = res.getHeader('Set-Cookie')
+    const cookies = Array.isArray(existing)
+      ? existing.map(String)
+      : existing
+        ? [String(existing)]
+        : []
+    const header = `${name}=${value}; Path=/api/netease; HttpOnly; SameSite=Lax; Max-Age=${maxAge}${env.VERCEL || 'encrypted' in req.socket ? '; Secure' : ''}`
+    if (Buffer.byteLength(header) > 4000)
+      throw new MusicError('网易云会话过大，请重新扫码登录。')
+    res.setHeader('Set-Cookie', [
+      ...cookies.filter((x) => !x.startsWith(`${name}=`)),
+      header,
+    ])
+  }
+  const save = () => setCookie(cookieName, seal(session, secret))
+  const saveWeb = () =>
+    setCookie(webCookieName, seal(webSession, secret), 7 * 86400)
+  const clearWeb = () => {
+    delete webSession.web
+    delete webSession.webPending
+    setCookie(webCookieName, '', 0)
+  }
   const clearUser = () => {
     delete session.user
     delete session.pending
     delete session.playback
+    clearWeb()
     save()
   }
   try {
@@ -84,6 +119,7 @@ export default async function handle(
           session.user && session.user.expires > Date.now() - 13 * 86400000,
         ),
         hybrid: env.NETEASE_PLAYBACK_PROVIDER === 'hybrid',
+        webLoggedIn,
       })
     if (req.method !== 'POST') {
       res.setHeader('Allow', 'GET, POST')
@@ -124,12 +160,32 @@ export default async function handle(
         'poll',
         'logout',
         'report',
+        'webQr',
+        'webPoll',
+        'webLogout',
       ].includes(String(action))
     )
       throw new MusicError('未知操作。', 400)
     if (action === 'logout') {
       clearUser()
       return send({ loggedIn: false })
+    }
+    if (['webQr', 'webPoll', 'webLogout'].includes(String(action))) {
+      if (env.NETEASE_PLAYBACK_PROVIDER !== 'hybrid')
+        throw new MusicError('当前服务没有启用网页播放。', 403)
+      if (action === 'webLogout') {
+        clearWeb()
+        delete session.playback
+        save()
+        return send({ webLoggedIn: false })
+      }
+      if (!session.user) throw new MusicError('请先扫码连接网易云曲库。', 401)
+      const result =
+        action === 'webQr'
+          ? await webQr(webSession, ip)
+          : await webPoll(webSession, ip)
+      saveWeb()
+      return send(result)
     }
     const id = typeof body.songId === 'string' ? body.songId : ''
     if (
@@ -335,8 +391,18 @@ export default async function handle(
           ![300, 403].includes(error.code)
         )
           throw error
-        const track = await webPlayback(song.originalId, session.deviceId, ip)
-        result = { code: 200, data: track }
+        try {
+          const track = await webPlayback(
+            song.originalId,
+            session.deviceId,
+            ip,
+            webLoggedIn ? webSession.web!.cookies : undefined,
+          )
+          result = { code: 200, data: track }
+        } catch (error) {
+          if (error instanceof WebAuthorizationError) clearWeb()
+          throw error
+        }
         source = 'web'
       }
       const data = result.data!

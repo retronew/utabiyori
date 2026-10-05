@@ -1,56 +1,36 @@
-import { createRequire } from 'node:module'
-import { existsSync, writeFileSync } from 'node:fs'
-import { tmpdir } from 'node:os'
-import { join } from 'node:path'
 import { MusicError } from './client.ts'
+import { webCall } from './web-client.ts'
+import type { WebCookies } from './web-client.ts'
 
 interface WebTrack {
   id: number
   url: string | null
   br: number
   freeTrialInfo?: { start: number; end: number } | null
+  code?: number
+  fee?: number
 }
-type WebRequest = (
-  route: string,
-  data: Record<string, unknown>,
-  options: Record<string, unknown>,
-) => Promise<{ body: { code: number; data: WebTrack[] } }>
-const require = createRequire(import.meta.url)
-let request: WebRequest | undefined
 export async function webPlayback(
   originalId: string,
   deviceId: string,
   ip: string,
+  cookies: WebCookies = {},
 ) {
-  if (!request) {
-    // The SDK reads this guest-token cache on import. No named-account cookie is stored here.
-    const file = join(tmpdir(), 'anonymous_token')
-    if (!existsSync(file)) {
-      try {
-        writeFileSync(file, '', { flag: 'wx', mode: 0o600 })
-      } catch (error) {
-        if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error
-      }
-    }
-    request =
-      require('@neteasecloudmusicapienhanced/api/util/request.js') as WebRequest
-  }
   try {
-    const result = await request(
+    const result = await webCall(
       '/api/song/enhance/player/url/v1',
       { ids: `[${originalId}]`, level: 'standard', encodeType: 'flac' },
-      {
-        crypto: 'weapi',
-        cookie: { deviceId },
-        realIP: ip,
-        randomCNIP: false,
-        timeout: 12000,
-      },
+      deviceId,
+      ip,
+      cookies,
     )
-    const track = result.body.data?.find((s) => String(s.id) === originalId)
+    const track = result.body.data?.find((s) => String(s.id) === originalId) as
+      WebTrack | undefined
     if (result.body.code !== 200 || !track?.url)
       throw new MusicError(
-        '网易云网页播放接口没有提供音频，可能需要网页版登录、会员或购买。',
+        cookies.MUSIC_U
+          ? '网易云未向当前网页登录账号提供此歌曲音频，可能受歌曲版权、会员权益或服务所在地区限制。'
+          : '游客播放未获得音频，请连接网页播放账号以使用你的会员或购买权限；歌曲也可能受服务所在地区限制。',
         403,
       )
     return { url: track.url, br: track.br, freeTrail: track.freeTrialInfo }

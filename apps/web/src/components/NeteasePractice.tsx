@@ -26,6 +26,7 @@ export default function NeteasePractice() {
   const [ready, setReady] = useState<boolean | null>(null)
   const [loggedIn, setLoggedIn] = useState(false)
   const [hybrid, setHybrid] = useState(false)
+  const [webLoggedIn, setWebLoggedIn] = useState(false)
   const [query, setQuery] = useState('')
   const [songs, setSongs] = useState<MusicSong[]>([])
   const [total, setTotal] = useState(0)
@@ -34,7 +35,11 @@ export default function NeteasePractice() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
-  const [qr, setQr] = useState<{ image: string; expires: number } | null>(null)
+  const [qr, setQr] = useState<{
+    image: string
+    expires: number
+    kind: 'official' | 'web'
+  } | null>(null)
   const [qrStatus, setQrStatus] = useState('')
   const [selected, setSelected] = useState<MusicSong | null>(null)
   const [lines, setLines] = useState<TimedLine[]>([])
@@ -46,6 +51,7 @@ export default function NeteasePractice() {
   const [showRomaji, setShowRomaji] = useState(true)
   const [showTranslation, setShowTranslation] = useState(true)
   const audio = useRef<HTMLAudioElement>(null)
+  const selectedSong = useRef<MusicSong | null>(null)
   const requestVersion = useRef(0)
   const qrVersion = useRef(0)
   const activeRequest = useRef<AbortController | null>(null)
@@ -66,6 +72,8 @@ export default function NeteasePractice() {
     } catch (error) {
       if (error instanceof MusicRequestError && error.status === 401)
         setLoggedIn(false)
+      if (error instanceof MusicRequestError && error.status === 403)
+        void accountStatus().catch(() => {})
       throw error
     }
   }
@@ -76,6 +84,7 @@ export default function NeteasePractice() {
       setReady(Boolean(data.configured))
       setLoggedIn(Boolean(data.loggedIn))
       setHybrid(Boolean(data.hybrid))
+      setWebLoggedIn(Boolean(data.webLoggedIn))
     })
   }
   function updateElapsed() {
@@ -123,15 +132,22 @@ export default function NeteasePractice() {
       }
       try {
         const data = await requestMusic<{ status: number }>(
-          { action: 'poll' },
+          { action: qr!.kind === 'web' ? 'webPoll' : 'poll' },
           controller.signal,
         )
         if (controller.signal.aborted || version !== qrVersion.current) return
         if (data.status === 803) {
-          setLoggedIn(true)
+          if (qr!.kind === 'web') setWebLoggedIn(true)
+          else setLoggedIn(true)
           setQr(null)
           setError('')
-          setNotice('网易云登录成功，开始找一首喜欢的日语歌吧。')
+          setNotice(
+            qr!.kind === 'web'
+              ? '网页播放账号已连接，将使用该账号的会员和购买权限。'
+              : '网易云登录成功，开始找一首喜欢的日语歌吧。',
+          )
+          if (qr!.kind === 'web' && selectedSong.current)
+            void selectSong(selectedSong.current)
           return
         }
         if (data.status === 800) {
@@ -193,7 +209,7 @@ export default function NeteasePractice() {
     }
   }, [])
 
-  async function login() {
+  async function login(kind: 'official' | 'web' = 'official') {
     const version = ++qrVersion.current
     setBusy(true)
     setError('')
@@ -201,11 +217,11 @@ export default function NeteasePractice() {
     setQrStatus('')
     try {
       const data = await requestMusic<{ url: string; expires: number }>({
-        action: 'qr',
+        action: kind === 'web' ? 'webQr' : 'qr',
       })
       const image = await QRCode.toDataURL(data.url, { width: 208, margin: 2 })
       if (version === qrVersion.current) {
-        setQr({ image, expires: data.expires })
+        setQr({ image, expires: data.expires, kind })
         setQrStatus('使用网易云音乐 App 扫码授权。')
       }
     } catch (e) {
@@ -224,10 +240,30 @@ export default function NeteasePractice() {
     try {
       await requestMusic({ action: 'logout' })
       setLoggedIn(false)
+      setWebLoggedIn(false)
       setQr(null)
       setNotice('已退出网易云。')
     } catch (e) {
       setError(e instanceof Error ? e.message : '退出失败。')
+    } finally {
+      setBusy(false)
+    }
+  }
+  async function disconnectWeb() {
+    setBusy(true)
+    setError('')
+    finishReport()
+    audio.current?.pause()
+    setPlayback(null)
+    setLoop(false)
+    qrVersion.current++
+    setQr(null)
+    try {
+      await requestMusic({ action: 'webLogout' })
+      setWebLoggedIn(false)
+      setNotice('已断开当前浏览器的网页播放账号。')
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '断开失败。')
     } finally {
       setBusy(false)
     }
@@ -260,6 +296,7 @@ export default function NeteasePractice() {
     activeRequest.current = controller
     const version = ++requestVersion.current
     setSelected(song)
+    selectedSong.current = song
     setLines([])
     setPlayback(null)
     setCurrent(0)
@@ -365,7 +402,9 @@ export default function NeteasePractice() {
           <p>
             {loggedIn
               ? hybrid
-                ? '官方曲库已连接。备用音频使用游客权限，会员权限不会自动同步到网页播放。'
+                ? webLoggedIn
+                  ? '曲库和网页播放账号已连接，音频按网页登录账号的会员、购买记录和版权获取。'
+                  : '官方曲库已连接。连接网页播放账号后，备用音频可使用该账号的会员或购买权限。'
                 : '播放范围由你的会员、购买记录和歌曲版权决定。'
               : '使用网易云 App 扫码登录，访问歌曲和播放权限。'}
           </p>
@@ -378,6 +417,27 @@ export default function NeteasePractice() {
           {loggedIn ? '退出登录' : qr ? '重新生成二维码' : '扫码登录'}
         </button>
       </div>
+      {hybrid && loggedIn && (
+        <div className="music-account">
+          <div>
+            <strong>
+              {webLoggedIn ? '网页播放已连接' : '连接网页播放账号'}
+            </strong>
+            <p>
+              {webLoggedIn
+                ? '登录信息仅保存在当前浏览器的加密会话中。部分歌曲仍可能受地区和版权限制。'
+                : '再用网易云 App 扫码一次，按你自己的账号权限播放。登录不会让账号没有权限的歌曲变为可播放。'}
+            </p>
+          </div>
+          <button
+            className={webLoggedIn ? 'secondary' : 'primary'}
+            disabled={busy || ready !== true}
+            onClick={() => void (webLoggedIn ? disconnectWeb() : login('web'))}
+          >
+            {webLoggedIn ? '断开网页播放' : '扫码连接网页播放'}
+          </button>
+        </div>
+      )}
       {ready === null && <p role="status">正在检查网易云连接…</p>}
       {ready === false && (
         <p role="alert" className="music-error">
@@ -390,10 +450,16 @@ export default function NeteasePractice() {
             src={qr.image}
             width="208"
             height="208"
-            alt="网易云音乐登录二维码"
+            alt={
+              qr.kind === 'web'
+                ? '网易云网页播放登录二维码'
+                : '网易云音乐登录二维码'
+            }
           />
           <div>
-            <h3>用网易云 App 扫一扫</h3>
+            <h3>
+              {qr.kind === 'web' ? '连接网页播放账号' : '用网易云 App 扫一扫'}
+            </h3>
             <p role="status">{qrStatus}</p>
             <small>有效期 5 分钟。授权仅用于当前浏览器。</small>
             <button
