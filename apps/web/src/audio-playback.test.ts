@@ -166,6 +166,60 @@ test('expiry guard can cancel play before any DSP fetch or native playback', asy
   transport.dispose()
 })
 
+test('cached DSP resume avoids loading notifications and remains cancellable', async () => {
+  const { transport, engines } = setup()
+  let waits = 0
+  let notice = ''
+  transport.bind({ onWaiting: () => waits++ }, (state) => {
+    notice = state.qualityNotice
+  })
+  await transport.play()
+  assert.equal(waits, 1)
+  transport.pause()
+  const engine = engines[0]!
+  let resume: () => void = () => {}
+  engine.play = () =>
+    new Promise<void>((resolve) => {
+      resume = resolve
+    })
+  const playing = transport.play()
+  assert.equal(transport.loading, false)
+  assert.equal(waits, 1)
+  assert.equal(notice, '')
+  transport.pause()
+  resume()
+  await playing
+  assert.equal(transport.paused, true)
+  assert.equal(engines.length, 1)
+  assert.equal(engine.disposed, false)
+  transport.dispose()
+})
+
+test('selecting DSP again after fallback retries at the native playback position', async () => {
+  let attempts = 0
+  const { transport, native, engines } = setup(async () => {
+    if (++attempts === 1) throw new TypeError('CORS')
+  })
+  let notice = ''
+  let active = ''
+  transport.bind({}, (state) => {
+    notice = state.qualityNotice
+    active = state.activeQuality
+  })
+  await transport.play()
+  assert.equal(active, 'native')
+  assert.match(notice, /已改用原生播放/)
+  native.currentTime = 24
+  await transport.setQuality('dsp')
+  assert.equal(attempts, 2)
+  assert.equal(active, 'dsp')
+  assert.equal(notice, '')
+  assert.equal(engines[1]!.currentTime, 24)
+  assert.equal(engines[1]!.paused, false)
+  assert.equal(native.paused, true)
+  transport.dispose()
+})
+
 test('quality switch preserves source position and elapsed media time excludes seeks', async () => {
   const { transport, native, engines } = setup()
   await transport.play()

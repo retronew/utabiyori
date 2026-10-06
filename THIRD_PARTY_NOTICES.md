@@ -45,6 +45,16 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
+## react-colorful
+
+The custom theme color picker uses react-colorful 5.8.1, styled to match the
+existing coss ui controls in `apps/web/src/components/ui/ColorPicker.tsx`.
+Upstream: https://github.com/omgovich/react-colorful
+
+MIT License, Copyright (c) 2020-present Vlad Shilov <omgovich@ya.ru>.
+The full license is distributed at
+`apps/web/public/licenses/react-colorful-MIT.txt`.
+
 ## Signalsmith Stretch
 
 The browser audio engine uses signalsmith-stretch 1.3.2 (WASM / AudioWorklet).

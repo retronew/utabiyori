@@ -298,7 +298,11 @@ export function PlayerControls({
                   { value: 'dsp', label: '高品质' },
                   { value: 'native', label: '原生' },
                 ]}
-                value={quality}
+                value={
+                  !loading && qualityNotice && quality !== activeQuality
+                    ? activeQuality
+                    : quality
+                }
                 onValueChange={(value) => {
                   if (value === 'dsp' || value === 'native')
                     onQualityChange(value)

@@ -194,7 +194,7 @@ export class AudioTransport {
     )
   }
   get loading() {
-    return this.pending
+    return this.pending && !this.engine
   }
   get duration() {
     return this.media?.duration ?? 0
@@ -243,12 +243,12 @@ export class AudioTransport {
       quality: this.preference,
       activeQuality: this.engine ? 'dsp' : 'native',
       qualityNotice:
-        this.fallback || (this.pending ? '正在准备保音高音频…' : ''),
+        this.fallback || (this.loading ? '正在准备保音高音频…' : ''),
     })
   }
 
   async setQuality(quality: PlaybackQuality) {
-    if (quality === this.preference) return
+    if (quality === this.preference && !this.fallback) return
     const playing = !this.paused
     const position = this.currentTime
     this.pause()
@@ -286,7 +286,7 @@ export class AudioTransport {
     // Business guards (expiry/rights) may pause synchronously from onPlay.
     this.handlers.onPlay?.()
     if (version !== this.version) return
-    this.handlers.onWaiting?.()
+    if (!this.engine) this.handlers.onWaiting?.()
     this.publish()
     const timeout = setTimeout(
       () => controller.abort(new Error('DSP 加载超时，已改用原生播放。')),

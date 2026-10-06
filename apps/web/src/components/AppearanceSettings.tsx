@@ -2,6 +2,7 @@ import { useRef, useState } from 'react'
 import { Sun, Moon, Monitor, Palette, Check, RotateCcw } from 'lucide-react'
 import { Button } from '#components/ui/button'
 import { Input } from '#components/ui/input'
+import { ColorPicker } from '#components/ui/ColorPicker'
 import {
   Dialog,
   DialogPopup,
@@ -10,7 +11,7 @@ import {
 } from '#components/ui/dialog'
 import { useTheme } from '#hooks/use-theme'
 import { cn } from '#lib/utils'
-import { contrast, defaultTheme, normalizeColor, themeColors } from '#lib/theme'
+import { defaultTheme, normalizeColor, themeColors } from '#lib/theme'
 import type { ThemeMode } from '#lib/theme'
 
 const modes: { value: ThemeMode; label: string; icon: typeof Sun }[] = [
@@ -92,10 +93,6 @@ export function AppearanceSettings() {
                     <span
                       style={{
                         backgroundColor: item.color,
-                        color:
-                          contrast(item.color, '#ffffff') >= 4.5
-                            ? '#ffffff'
-                            : '#000000',
                       }}
                       className={cn(
                         'flex size-9 items-center justify-center rounded-full border border-black/10 text-white',
@@ -104,7 +101,11 @@ export function AppearanceSettings() {
                       )}
                     >
                       {settings.color === item.color && (
-                        <Check className="size-4 drop-shadow" />
+                        <Check
+                          aria-hidden
+                          className="size-4 text-white opacity-100 drop-shadow-xs"
+                          strokeWidth={2.5}
+                        />
                       )}
                     </span>
                     <span className="text-xs text-muted-foreground">
@@ -127,31 +128,41 @@ export function AppearanceSettings() {
                 }
               }}
             >
-              <label
-                htmlFor="theme-custom-hex"
-                className="mb-3 block text-xs font-semibold"
-              >
+              <p id="theme-custom-label" className="mb-3 text-xs font-semibold">
                 自定义颜色
-              </label>
-              <div className="flex items-center gap-2">
-                <Input
-                  nativeInput
-                  type="color"
-                  aria-label="选择自定义颜色"
-                  value={customColor || settings.color}
-                  onChange={(event) => {
-                    setDraft(event.target.value)
-                    update({ color: event.target.value })
-                  }}
-                  className="w-11 shrink-0 [&_input]:cursor-pointer [&_input]:px-1.5"
+              </p>
+              <ColorPicker
+                role="group"
+                aria-labelledby="theme-custom-label"
+                aria-describedby="theme-picker-help"
+                color={customColor || settings.color}
+                onChange={(color) => {
+                  setDraft(color)
+                  update({ color })
+                }}
+              />
+              <p id="theme-picker-help" className="sr-only">
+                拖动色板选择饱和度和明度，拖动下方色相条更换颜色，也可使用方向键调整。
+              </p>
+              <div className="mt-4 flex items-center gap-2">
+                <span
+                  aria-hidden
+                  style={{ backgroundColor: customColor || settings.color }}
+                  className="size-8.5 shrink-0 rounded-lg border border-black/10 shadow-xs dark:border-white/10 sm:size-7.5"
                 />
+                <label htmlFor="theme-custom-hex" className="sr-only">
+                  自定义颜色 HEX
+                </label>
                 <Input
                   id="theme-custom-hex"
                   aria-label="自定义颜色 HEX"
                   value={draft}
                   maxLength={7}
                   spellCheck={false}
-                  onChange={(event) => setDraft(event.target.value)}
+                  autoComplete="off"
+                  onChange={(event) => {
+                    setDraft(event.target.value)
+                  }}
                   aria-invalid={!customColor}
                   aria-describedby="theme-color-help"
                   className="font-mono"
@@ -165,7 +176,7 @@ export function AppearanceSettings() {
               >
                 {!customColor
                   ? '请输入 HEX 颜色，例如 #8b5cf6 或 #abc。'
-                  : '颜色将自动适配明暗模式。'}
+                  : '拖动即可调整，颜色会自动适配明暗模式。'}
               </p>
             </form>
             <div className="flex flex-wrap items-center justify-between gap-3 border-t pt-4">

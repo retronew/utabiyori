@@ -3,6 +3,7 @@ import { LocateFixed } from 'lucide-react'
 import { LyricPlayer } from '@applemusic-like-lyrics/react'
 import type { LyricPlayerRef } from '@applemusic-like-lyrics/react'
 import type { OptimizeLyricOptions } from '@applemusic-like-lyrics/core'
+import { LayoutReason } from '@applemusic-like-lyrics/core'
 import '@applemusic-like-lyrics/core/style.css'
 
 import type { TimedLine } from '#music'
@@ -113,7 +114,14 @@ export function AmllLyrics({
           size="sm"
           className="absolute end-3 bottom-3 bg-black/70 text-white hover:bg-black/90 data-pressed:bg-black/90 focus-visible:ring-white focus-visible:ring-offset-transparent"
           onClick={() => {
-            player?.lyricPlayer?.resetScroll()
+            const core = player?.lyricPlayer
+            if (!core) return
+            const seconds = readTime()
+            if (Number.isFinite(seconds))
+              core.setCurrentTime(Math.round(Math.max(0, seconds) * 1000))
+            core.resetScroll()
+            // Resetting scroll alone does not recalculate paused or unchanged lines.
+            core.calcLayout(LayoutReason.ConfigChange)
             setManualScroll(false)
           }}
         >
