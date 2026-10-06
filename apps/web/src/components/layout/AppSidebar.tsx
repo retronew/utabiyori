@@ -80,7 +80,7 @@ export function AppSidebar({
                     aria-label={item.label}
                     aria-current={tab === item.id ? 'page' : undefined}
                     className={cn(
-                      'h-9 min-w-0 justify-center gap-2 rounded-lg px-1 text-xs sm:text-sm md:h-9 md:justify-start md:px-3',
+                      'h-9 min-w-0 justify-center gap-2 rounded-lg px-1 text-xs sm:text-sm md:h-9 md:justify-start md:pr-3 md:pl-9',
                       'transition-[padding,gap,background-color,color] duration-(--duration-fast) ease-(--ease-smooth-out) motion-reduce:transition-none',
                       collapsed &&
                         'md:size-9 md:self-center md:justify-center md:gap-0 md:px-0',
@@ -90,7 +90,12 @@ export function AppSidebar({
                   />
                 }
               >
-                <item.icon className="size-4 shrink-0 max-sm:hidden" />
+                <item.icon
+                  className={cn(
+                    'size-4 shrink-0 max-sm:hidden md:absolute md:top-1/2 md:left-3 md:mx-0! md:-translate-y-1/2',
+                    collapsed && 'md:left-1/2 md:-translate-x-1/2',
+                  )}
+                />
                 <span
                   className={cn(
                     'max-w-32 overflow-hidden whitespace-nowrap transition-[max-width,opacity] duration-(--duration-fast) ease-(--ease-smooth-out) motion-reduce:transition-none',
