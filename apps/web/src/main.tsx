@@ -4,13 +4,16 @@ import '#index.css'
 import App from '#App'
 import { ThemeProvider } from '#components/ThemeProvider'
 import { PlayerProvider } from '#components/PlayerSlot'
+import { AccountProvider } from '#components/AccountProvider'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <ThemeProvider>
-      <PlayerProvider>
-        <App />
-      </PlayerProvider>
-    </ThemeProvider>
+    <AccountProvider>
+      <ThemeProvider>
+        <PlayerProvider>
+          <App />
+        </PlayerProvider>
+      </ThemeProvider>
+    </AccountProvider>
   </StrictMode>,
 )

@@ -12,6 +12,13 @@ export interface Token {
 }
 export interface Session {
   deviceId: string
+  oauth?: {
+    state: string
+    nonce: string
+    verifier: string
+    origin: string
+    expires: number
+  }
   web?: {
     cookies: { MUSIC_U?: string; __csrf?: string }
     expires: number

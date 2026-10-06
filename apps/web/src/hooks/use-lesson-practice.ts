@@ -1,22 +1,23 @@
 import { useState } from 'react'
 import { songs as builtInSongs } from '@jp-learn/content'
 import { progressKey } from '@jp-learn/shared'
-import type { Progress } from '@jp-learn/shared'
-import { readLibrary, importLesson } from '#library'
-import { readProgress, progressStorageKey } from '#lib/progress'
+import { importLesson } from '#library'
+import { useAccount } from '#hooks/use-account'
 import { useSpeechPractice } from '#hooks/use-speech-practice'
 
 export function useLessonPractice(onSelectSong: () => void) {
-  const [customSongs, setCustomSongs] = useState(readLibrary)
+  const account = useAccount()
+  const customSongs = account.data.lessons
   const songs = [...builtInSongs, ...customSongs]
   const [songId, setSongId] = useState(songs[0].id)
   const [lineIndex, setLineIndex] = useState(0)
   const [romaji, setRomaji] = useState(true)
   const [translation, setTranslation] = useState(true)
-  const [progress, setProgress] = useState<Progress>(readProgress)
+  const progress = account.data.progress
   const [message, setMessage] = useState('')
   const song = songs.find((item) => item.id === songId) || songs[0]
-  const line = song.lines[lineIndex]
+  const currentLineIndex = Math.min(lineIndex, song.lines.length - 1)
+  const line = song.lines[currentLineIndex]
   const mastered = !!progress[progressKey(song.id, line.id)]
   const learned = songs.reduce(
     (sum, item) =>
@@ -40,25 +41,29 @@ export function useLessonPractice(onSelectSong: () => void) {
     setMessage('')
   }
   function toggleMastered() {
-    const next = { ...progress, [progressKey(song.id, line.id)]: !mastered }
-    setProgress(next)
+    if (
+      !account.update({
+        kind: 'progress',
+        key: progressKey(song.id, line.id),
+        mastered: !mastered,
+      })
+    ) {
+      setMessage('进度未保存，请在账号面板查看原因后重试。')
+      return
+    }
     setMessage(
       mastered
         ? '已放回待练习。'
         : '这一句已经学会了，试着关掉罗马音再唱一次。',
     )
-    try {
-      localStorage.setItem(progressStorageKey, JSON.stringify(next))
-    } catch {
-      setMessage('浏览器无法保存进度，本次练习仍可继续。')
-    }
   }
 
   async function importFile(file: File) {
     try {
       const next = await importLesson(file, customSongs)
-      setCustomSongs(next)
-      selectSong(next[next.length - 1].id)
+      if (!account.update({ kind: 'lesson', song: next }))
+        throw new Error('课程未保存，请在账号面板查看原因后重试。')
+      selectSong(next.id)
       setMessage('练习已导入，可以开始逐句跟读。')
     } catch (error) {
       setMessage(error instanceof Error ? error.message : '导入失败，请重试。')
@@ -68,7 +73,7 @@ export function useLessonPractice(onSelectSong: () => void) {
     songs,
     song,
     line,
-    lineIndex,
+    lineIndex: currentLineIndex,
     progress,
     romaji,
     translation,

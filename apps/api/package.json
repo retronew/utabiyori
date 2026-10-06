@@ -3,6 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "db:migrate": "node --env-file=../../.env.local scripts/migrate.mjs",
     "typecheck": "tsc --noEmit",
     "test": "node --conditions=source --experimental-strip-types --test src/*.test.ts",
     "build": "tsc --noEmit && node scripts/build.mjs"
@@ -14,12 +15,19 @@
   },
   "dependencies": {
     "@jp-learn/shared": "workspace:*",
-    "@neteasecloudmusicapienhanced/api": "4.41.0"
+    "@neondatabase/serverless": "^1.2.0",
+    "@neteasecloudmusicapienhanced/api": "4.41.0",
+    "jose": "^6.2.12"
   },
   "imports": {
     "#*": "./src/*.ts"
   },
   "exports": {
+    "./account-handler": {
+      "types": "./src/account-handler.ts",
+      "source": "./src/account-handler.ts",
+      "default": "./dist/account-handler.js"
+    },
     "./handler": {
       "types": "./src/handler.ts",
       "source": "./src/handler.ts",

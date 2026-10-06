@@ -27,9 +27,15 @@ importers:
       '@jp-learn/shared':
         specifier: workspace:*
         version: link:../../packages/shared
+      '@neondatabase/serverless':
+        specifier: ^1.2.0
+        version: 1.2.0
       '@neteasecloudmusicapienhanced/api':
         specifier: 4.41.0
         version: 4.41.0(debug@4.4.3(supports-color@5.5.0))(supports-color@5.5.0)
+      jose:
+        specifier: ^6.2.12
+        version: 6.2.12
     devDependencies:
       '@types/node':
         specifier: ^24.13.3
@@ -415,6 +421,10 @@ packages:
 
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
+
+  '@neondatabase/serverless@1.2.0':
+    resolution: {integrity: sha512-tnaqgixUengZQNd9ZrS3ytQfamJzLKY8QxgqWQTNHHtB+KrFQWk77JTbbpg4RD+J3qE4eO2lVytvGDX5Kj6FdQ==}
+    engines: {node: '>=19.0.0'}
 
   '@neteasecloudmusicapienhanced/api@4.41.0':
     resolution: {integrity: sha512-qCMPf/0bvCv3AQaFGbL9ijgk/0xe71bch0BXWVZKDO4DCldhveydA2U4LKjNq81WUHBb2nTTzYHxmPTD6qYU8w==}
@@ -1453,6 +1463,9 @@ packages:
   jiti@2.7.0:
     resolution: {integrity: sha512-AC/7JofJvZGrrneWNaEnJeOLUx+JlGt7tNa0wZiRPT4MY1wmfKjt2+6O2p2uz2+skll8OZZmJMNqeke7kKbNgQ==}
     hasBin: true
+
+  jose@6.2.12:
+    resolution: {integrity: sha512-9NiFmJEex0sy2Dk58j2UGBSHgUs2ypF9eZSu4L6vjOX3Dp96Sw1F3uL+H+D1sx02jZZdzUT0HgvCy59CuvXcWw==}
 
   joycon@3.1.1:
     resolution: {integrity: sha512-34wB/Y7MW7bzjKRjUKTa46I2Z7eV62Rkhva+KkopW7Qvv/OSWBqvkSY7vusOPrNuZcUG3tApvdVgNB8POj3SPw==}
@@ -2607,6 +2620,8 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.6.0
 
+  '@neondatabase/serverless@1.2.0': {}
+
   '@neteasecloudmusicapienhanced/api@4.41.0(debug@4.4.3(supports-color@5.5.0))(supports-color@5.5.0)':
     dependencies:
       '@neteasecloudmusicapienhanced/unblockmusic-utils': 0.4.5(debug@4.4.3(supports-color@5.5.0))(supports-color@5.5.0)
@@ -3598,6 +3613,8 @@ snapshots:
   ismobilejs@1.1.1: {}
 
   jiti@2.7.0: {}
+
+  jose@6.2.12: {}
 
   joycon@3.1.1: {}
 

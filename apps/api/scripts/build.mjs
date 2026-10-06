@@ -1,8 +1,8 @@
 import { build } from 'esbuild'
 
 await build({
-  entryPoints: ['src/handler.ts'],
-  outfile: 'dist/handler.js',
+  entryPoints: ['src/handler.ts', 'src/account-handler.ts'],
+  outdir: 'dist',
   bundle: true,
   platform: 'node',
   format: 'esm',

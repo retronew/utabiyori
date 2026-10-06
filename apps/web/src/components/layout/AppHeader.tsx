@@ -1,5 +1,6 @@
 import { lazy, Suspense } from 'react'
 import { Skeleton } from '#components/ui/Skeleton'
+import { AccountSettings } from '#components/account/AccountSettings'
 import type { AppTab } from '#lib/navigation'
 import { navigationItems } from '#lib/navigation'
 
@@ -25,6 +26,7 @@ export function AppHeader({ tab, learned, total }: AppHeaderProps) {
         </h1>
       </div>
       <div className="flex shrink-0 items-center gap-2">
+        <AccountSettings />
         <Suspense fallback={<Skeleton className="size-8 sm:size-7" />}>
           <AppearanceSettings />
         </Suspense>

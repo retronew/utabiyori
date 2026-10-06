@@ -103,3 +103,24 @@ export function validLoop(
 }
 export { MUSIC_QUALITIES, isMusicQuality } from '#music-quality'
 export type { MusicQuality } from '#music-quality'
+export {
+  emptyAccountData,
+  parseAccountData,
+  parseAccountOperation,
+  mergeAccountData,
+  applyAccountOperation,
+  favoriteData,
+  lessonData,
+  validTheme,
+  record,
+  accountDataLimit,
+} from '#account'
+export type {
+  AccountData,
+  AccountTheme,
+  AccountUser,
+  AccountSnapshot,
+  AccountOperation,
+  PendingOperation,
+  FavoriteSong,
+} from '#account'

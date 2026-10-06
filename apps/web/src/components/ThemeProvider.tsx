@@ -1,7 +1,8 @@
 import { useLayoutEffect, useState, useSyncExternalStore } from 'react'
 import type { ReactNode } from 'react'
 import { ThemeContext } from '#lib/theme-context'
-import { parseTheme, themePalette, themeStorageKey } from '#lib/theme'
+import { parseTheme, themePalette } from '#lib/theme'
+import { useAccount } from '#hooks/use-account'
 
 const systemDark = () =>
   window.matchMedia('(prefers-color-scheme: dark)').matches
@@ -10,17 +11,9 @@ function subscribeSystem(listener: () => void) {
   media.addEventListener('change', listener)
   return () => media.removeEventListener('change', listener)
 }
-function readTheme() {
-  try {
-    return parseTheme(
-      JSON.parse(localStorage.getItem(themeStorageKey) || 'null'),
-    )
-  } catch {
-    return parseTheme(null)
-  }
-}
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [settings, setSettings] = useState(readTheme)
+  const account = useAccount()
+  const settings = parseTheme(account.data.theme)
   const [persistenceError, setPersistenceError] = useState(false)
   const prefersDark = useSyncExternalStore(subscribeSystem, systemDark)
   const dark =
@@ -54,13 +47,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
         persistenceError,
         update: (patch) => {
           const next = parseTheme({ ...settings, ...patch })
-          setSettings(next)
-          try {
-            localStorage.setItem(themeStorageKey, JSON.stringify(next))
-            setPersistenceError(false)
-          } catch {
-            setPersistenceError(true)
-          }
+          setPersistenceError(!account.update({ kind: 'theme', theme: next }))
         },
       }}
     >
