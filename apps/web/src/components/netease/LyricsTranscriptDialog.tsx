@@ -25,7 +25,7 @@ export function LyricsTranscriptDialog({
           <Button
             variant="ghost"
             size="sm"
-            className="ml-auto text-white/80 hover:bg-white/10"
+            className="ml-auto text-white/85 hover:bg-white/15 hover:text-white data-pressed:bg-white/20 focus-visible:ring-white focus-visible:ring-offset-transparent"
           />
         }
       >

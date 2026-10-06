@@ -93,14 +93,19 @@ export function LyricsPanel({
   return (
     <div
       className={cn(
-        'relative isolate flex min-h-0 flex-1 flex-col overflow-clip rounded-[14px] bg-[#3b343b] text-white transition-[border-radius] duration-(--fullscreen-duration) ease-(--ease-smooth-out) motion-reduce:transition-none',
+        'relative isolate flex min-h-0 flex-1 flex-col overflow-clip rounded-[14px] transition-[border-radius] duration-(--fullscreen-duration) ease-(--ease-smooth-out) motion-reduce:transition-none',
+        selected
+          ? 'bg-[#343438] text-white selection:bg-white/25 selection:text-white'
+          : 'bg-linear-to-b from-muted to-background text-foreground',
         className,
       )}
     >
-      <MusicAtmosphere cover={selected?.cover} playing={playing && visible} />
+      {selected && (
+        <MusicAtmosphere cover={selected.cover} playing={playing && visible} />
+      )}
       {selected ? (
         <>
-          <div className="relative isolate z-10 shrink-0 after:pointer-events-none after:absolute after:inset-x-0 after:top-0 after:-bottom-8 after:-z-10 after:bg-black/15 after:backdrop-blur-xl after:[mask-image:linear-gradient(to_bottom,black_calc(100%-32px),transparent)]">
+          <div className="relative isolate z-10 shrink-0 after:pointer-events-none after:absolute after:inset-x-0 after:top-0 after:-bottom-8 after:-z-10 after:bg-black/25 after:backdrop-blur-xl after:[mask-image:linear-gradient(to_bottom,black_calc(100%-32px),transparent)]">
             <div className="flex shrink-0 items-center gap-3 px-3 py-2 sm:gap-4 sm:px-5 sm:py-4 md:px-6 md:pt-6 md:pb-5 xl:gap-5 xl:px-8">
               <Artwork
                 src={selected.cover}
@@ -123,7 +128,7 @@ export function LyricsPanel({
                 aria-label={favorite ? '取消收藏当前歌曲' : '收藏当前歌曲'}
                 aria-pressed={favorite}
                 onClick={onFavorite}
-                className="shrink-0 text-white hover:bg-white/10"
+                className="shrink-0 text-white hover:bg-white/15 data-pressed:bg-white/20 focus-visible:ring-white focus-visible:ring-offset-transparent"
               >
                 <IconSwap
                   active={favorite}
@@ -135,7 +140,7 @@ export function LyricsPanel({
             <div className="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-1 px-3 py-1 text-xs text-white/80 sm:px-5 md:px-6 xl:px-8">
               <Label className="text-white/80">
                 <Switch
-                  className="focus-visible:ring-white focus-visible:ring-offset-transparent"
+                  className="inset-ring inset-ring-white/60 data-checked:bg-white data-unchecked:bg-white/15 focus-visible:ring-white focus-visible:ring-offset-transparent [&_[data-slot=switch-thumb]]:bg-white [&_[data-slot=switch-thumb][data-checked]]:bg-[#343438]"
                   checked={showRomaji}
                   onCheckedChange={onRomajiChange}
                   aria-label="显示罗马音"
@@ -144,7 +149,7 @@ export function LyricsPanel({
               </Label>
               <Label className="text-white/80">
                 <Switch
-                  className="focus-visible:ring-white focus-visible:ring-offset-transparent"
+                  className="inset-ring inset-ring-white/60 data-checked:bg-white data-unchecked:bg-white/15 focus-visible:ring-white focus-visible:ring-offset-transparent [&_[data-slot=switch-thumb]]:bg-white [&_[data-slot=switch-thumb][data-checked]]:bg-[#343438]"
                   checked={showTranslation}
                   onCheckedChange={onTranslationChange}
                   aria-label="显示翻译"
@@ -214,7 +219,7 @@ export function LyricsPanel({
                     variant="ghost"
                     size="sm"
                     onClick={() => onRetry()}
-                    className="ml-1 text-rose-100 hover:bg-white/10"
+                    className="ml-1 text-rose-100 hover:bg-white/15 data-pressed:bg-white/20 focus-visible:ring-white focus-visible:ring-offset-transparent"
                   >
                     <RefreshCw className="size-3" />
                     重试
@@ -270,14 +275,14 @@ export function LyricsPanel({
               </p>
             )}
           </div>
-          <div className="relative isolate z-10 flex shrink-0 flex-wrap items-center gap-2 px-3 py-2 text-xs text-white/80 before:pointer-events-none before:absolute before:inset-x-0 before:-top-10 before:bottom-0 before:-z-10 before:bg-black/15 before:backdrop-blur-xl before:[mask-image:linear-gradient(to_bottom,transparent,black_40px)] sm:px-5 md:px-6 xl:px-8">
+          <div className="relative isolate z-10 flex shrink-0 flex-wrap items-center gap-2 px-3 py-2 text-xs text-white/80 before:pointer-events-none before:absolute before:inset-x-0 before:-top-10 before:bottom-0 before:-z-10 before:bg-black/25 before:backdrop-blur-xl before:[mask-image:linear-gradient(to_bottom,transparent,black_40px)] sm:px-5 md:px-6 xl:px-8">
             <AudioLines className="size-3.5" />
             <a
               href="https://github.com/retronew/utabiyori"
               target="_blank"
               rel="noreferrer"
               title="项目源码与 AMLL AGPL-3.0-only 许可说明"
-              className="shrink-0 rounded text-white/80 hover:text-white focus-visible:ring-white/60"
+              className="shrink-0 rounded text-white/80 hover:text-white focus-visible:ring-white"
             >
               AMLL · 源码
             </a>
@@ -301,21 +306,28 @@ export function LyricsPanel({
           </div>
         </>
       ) : (
-        <div className="flex h-full flex-col items-center justify-center px-8 py-10 text-center">
-          <Artwork className="size-36 rounded-[28px] shadow-2xl xl:size-44" />
-          <h2 className="mt-6 text-2xl font-bold tracking-tight xl:text-3xl">
+        <div className="flex min-h-0 flex-1 flex-col items-center justify-center overflow-y-auto px-6 py-8 text-center sm:px-8">
+          <img
+            src="/brand/netease-cloud-music.svg"
+            alt=""
+            aria-hidden
+            width={96}
+            height={96}
+            className="size-20 shrink-0 sm:size-24"
+          />
+          <h2 className="mt-6 text-xl font-semibold tracking-tight sm:text-2xl">
             选择歌曲
           </h2>
-          <p className="mt-4 max-w-xs text-sm leading-7 text-white/80">
+          <p className="mt-3 max-w-xs text-sm leading-relaxed text-muted-foreground text-pretty">
             从曲库选择歌曲，查看歌词并练习。
           </p>
-          <div className="mt-8 flex gap-6 text-xs text-white/80">
+          <div className="mt-6 flex flex-wrap justify-center gap-x-5 gap-y-3 text-xs text-muted-foreground">
             <span className="flex items-center gap-2">
-              <Music2 className="size-4" />
+              <Music2 aria-hidden className="size-4" strokeWidth={1.5} />
               同步歌词
             </span>
             <span className="flex items-center gap-2">
-              <AudioLines className="size-4" />
+              <AudioLines aria-hidden className="size-4" strokeWidth={1.5} />
               慢速跟唱
             </span>
           </div>

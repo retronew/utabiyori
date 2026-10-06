@@ -111,7 +111,7 @@ export function AmllLyrics({
         <Button
           variant="ghost"
           size="sm"
-          className="absolute end-3 bottom-3 bg-black/70 text-white hover:bg-black/90 focus-visible:ring-white"
+          className="absolute end-3 bottom-3 bg-black/70 text-white hover:bg-black/90 data-pressed:bg-black/90 focus-visible:ring-white focus-visible:ring-offset-transparent"
           onClick={() => {
             player?.lyricPlayer?.resetScroll()
             setManualScroll(false)

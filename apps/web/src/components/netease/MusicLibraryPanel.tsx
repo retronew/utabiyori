@@ -221,13 +221,10 @@ export function MusicLibraryPanel({
                 <p className="mt-2 text-xs leading-6 text-muted-foreground">
                   {searched
                     ? `未找到“${searched}”，请更换关键词。`
-                    : '输入歌名或歌手。'}
+                    : !loggedIn && ready === true
+                      ? '先在上方连接账号，再搜索歌曲。'
+                      : '输入歌名或歌手。'}
                 </p>
-                {!loggedIn && ready === true && (
-                  <Button className="mt-4" onClick={onAccountOpen}>
-                    连接账号
-                  </Button>
-                )}
                 {searched && (
                   <Button
                     variant="outline"

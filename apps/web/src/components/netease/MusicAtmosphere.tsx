@@ -28,14 +28,13 @@ export function MusicAtmosphere({
       ref={container}
       aria-hidden
       data-slot="music-atmosphere"
-      className="pointer-events-none absolute inset-0 -z-20 overflow-hidden bg-[#28232e]"
+      className="pointer-events-none absolute inset-0 -z-20 overflow-hidden bg-[#343438]"
     >
-      <div className="absolute inset-0 bg-radial from-primary/50 via-primary/15 to-transparent" />
       {cover && (
         <img
           src={cover}
           alt=""
-          className="absolute -inset-1/4 size-[150%] max-w-none object-cover opacity-70 blur-[55px] saturate-150"
+          className="absolute -inset-1/4 size-[150%] max-w-none object-cover opacity-70 blur-[55px]"
         />
       )}
       {cover && (
@@ -45,7 +44,7 @@ export function MusicAtmosphere({
           </Suspense>
         </MusicVisualBoundary>
       )}
-      <div className="absolute inset-0 bg-linear-to-b from-black/65 via-black/65 to-black/70" />
+      <div className="absolute inset-0 bg-black/55" />
     </div>
   )
 }

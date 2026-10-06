@@ -1,5 +1,15 @@
 # Third-party notices
 
+## Simple Icons · NetEase Cloud Music
+
+The NetEase Cloud Music SVG in `apps/web/public/brand/netease-cloud-music.svg`
+comes from [Simple Icons 16.0.0](https://github.com/simple-icons/simple-icons/blob/16.0.0/icons/neteasecloudmusic.svg),
+with the circular background replaced by a red rounded square and the inner
+mark rendered in white to create an app-style icon.
+Simple Icons is distributed under CC0-1.0;
+the license is included at `apps/web/public/licenses/Simple-Icons-CC0.txt`.
+Brand trademarks remain the property of their respective owners.
+
 ## coss ui
 
 The components in `apps/web/src/components/ui` and the segmented-control helper

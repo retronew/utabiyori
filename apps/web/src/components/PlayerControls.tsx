@@ -45,6 +45,7 @@ export interface PlayerControlsProps {
   title?: string
   subtitle?: string
   cover?: string
+  emptyCover?: string
   current: number
   duration: number
   lower?: number
@@ -80,6 +81,7 @@ export function PlayerControls({
   title,
   subtitle,
   cover,
+  emptyCover,
   current,
   duration,
   lower = 0,
@@ -137,7 +139,18 @@ export function PlayerControls({
     >
       {!compact && (
         <div className="flex min-w-0 items-center gap-3 max-xl:hidden">
-          <Artwork src={cover} className="size-11 shrink-0 rounded-lg" />
+          {!title && emptyCover ? (
+            <img
+              src={emptyCover}
+              alt=""
+              aria-hidden
+              width={44}
+              height={44}
+              className="size-11 shrink-0"
+            />
+          ) : (
+            <Artwork src={cover} className="size-11 shrink-0 rounded-lg" />
+          )}
           <div className="min-w-0 flex-1">
             <MarqueeText
               text={title || '未选择歌曲'}
