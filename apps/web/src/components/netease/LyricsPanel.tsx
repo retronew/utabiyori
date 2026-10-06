@@ -94,7 +94,7 @@ export function LyricsPanel({
     <div
       data-slot="lyrics-panel"
       className={cn(
-        'relative isolate flex min-h-0 flex-1 flex-col overflow-hidden rounded-[14px] [clip-path:inset(0_round_14px)] transition-[border-radius,clip-path] duration-(--fullscreen-duration) ease-(--ease-smooth-out) motion-reduce:transition-none',
+        'relative isolate flex min-h-0 flex-1 flex-col overflow-hidden rounded-[14px] transform-gpu [clip-path:inset(0_round_14px)] transition-[border-radius,clip-path] duration-(--fullscreen-duration) ease-(--ease-smooth-out) motion-reduce:transition-none',
         selected
           ? 'bg-[#343438] text-white selection:bg-white/25 selection:text-white'
           : 'bg-linear-to-b from-muted to-background text-foreground',
