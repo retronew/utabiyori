@@ -8,4 +8,22 @@ export class MediaClockLyricPlayer extends LyricPlayer {
   protected override get isNonDynamic() {
     return false
   }
+
+  override rebuildLyricView(initialTime?: number) {
+    super.rebuildLyricView(initialTime)
+    // Bind detached lines too: AMLL virtualizes the visible DOM while scrolling.
+    for (const group of this.currentLyricGroups) {
+      for (const row of [group.mainLine, group.bgLine]) {
+        if (!row) continue
+        const line = row.getLine()
+        const duration = Math.max(1, line.endTime - line.startTime)
+        row
+          .getElement()
+          .style.setProperty(
+            '--aux-progress',
+            `clamp(0%, calc((var(--amll-player-time, 0) - ${line.startTime}) / ${duration} * 100%), 100%)`,
+          )
+      }
+    }
+  }
 }

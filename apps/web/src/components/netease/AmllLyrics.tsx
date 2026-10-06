@@ -74,7 +74,7 @@ export function AmllLyrics({
     <div
       data-romaji={showRomaji}
       data-translation={showTranslation}
-      className="relative h-full min-h-0 [&_[class$=lyricSubLine]]:text-base! [&_[class$=lyricSubLine]]:leading-relaxed! [&_[class$=lyricSubLine]]:opacity-50! [&_[class$=lyricSubLine]]:transition-opacity! [&_[class$=lyricSubLine]]:duration-(--duration-quick)! [&_[class$=lyricSubLine]]:delay-0! md:[&_[class$=lyricSubLine]]:text-xl! [&_[class*=active]>[class$=lyricSubLine]]:opacity-100! data-[translation=false]:[&_[class$=lyricSubLine]:nth-child(2)]:opacity-0! data-[romaji=false]:[&_[class$=lyricSubLine]:nth-child(3)]:opacity-0! motion-reduce:[&_[class$=lyricSubLine]]:transition-none!"
+      className="relative h-full min-h-0 [&_[class$=lyricSubLine]]:w-fit [&_[class$=lyricSubLine]]:max-w-full [&_[class$=lyricSubLine]]:bg-clip-text [&_[class$=lyricSubLine]]:text-transparent! [&_[class$=lyricSubLine]]:[background-image:linear-gradient(to_right,white_var(--aux-progress,0%),rgb(255_255_255_/_0.4)_var(--aux-progress,0%))] [&_[class$=lyricSubLine]]:text-base! [&_[class$=lyricSubLine]]:leading-relaxed! [&_[class$=lyricSubLine]]:opacity-50! [&_[class$=lyricSubLine]]:transition-opacity! [&_[class$=lyricSubLine]]:duration-(--duration-quick)! [&_[class$=lyricSubLine]]:delay-0! md:[&_[class$=lyricSubLine]]:text-xl! [&_[class*=active]>[class$=lyricSubLine]]:opacity-100! data-[translation=false]:[&_[class$=lyricSubLine]:nth-child(2)]:opacity-0! data-[romaji=false]:[&_[class$=lyricSubLine]:nth-child(3)]:opacity-0! motion-reduce:[&_[class$=lyricSubLine]]:transition-none!"
       onWheel={() => setManualScroll(true)}
       onTouchMove={() => setManualScroll(true)}
     >

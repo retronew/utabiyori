@@ -8,8 +8,11 @@ export function Switch({
   className,
   ...props
 }: SwitchPrimitive.Root.Props): React.ReactElement {
+  // A native button prevents wrapping labels from activating the hidden input twice.
   return (
     <SwitchPrimitive.Root
+      nativeButton
+      render={<button type="button" />}
       className={cn(
         'inline-flex h-[calc(var(--thumb-size)+2px)] w-[calc(var(--thumb-size)*2-2px)] shrink-0 items-center rounded-full p-px outline-none transition-[background-color,box-shadow] duration-(--duration-quick) [--thumb-size:--spacing(5)] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background data-disabled:cursor-not-allowed data-checked:bg-primary data-unchecked:bg-input data-disabled:opacity-64 sm:[--thumb-size:--spacing(4)]',
         className,

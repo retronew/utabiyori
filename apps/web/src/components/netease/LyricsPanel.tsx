@@ -141,7 +141,7 @@ export function LyricsPanel({
             <div className="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-1 px-3 py-1 text-xs text-white/80 sm:px-5 md:px-6 xl:px-8">
               <Label className="text-white/80">
                 <Switch
-                  className="inset-ring inset-ring-white/60 data-checked:bg-white data-unchecked:bg-white/15 focus-visible:ring-white focus-visible:ring-offset-transparent [&_[data-slot=switch-thumb]]:bg-white [&_[data-slot=switch-thumb][data-checked]]:bg-[#343438]"
+                  className="inset-ring inset-ring-white/60 data-checked:bg-white/40 data-unchecked:bg-white/15 focus-visible:ring-white focus-visible:ring-offset-transparent [&_[data-slot=switch-thumb]]:bg-white [&_[data-slot=switch-thumb]]:scale-100! [&_[data-slot=switch-thumb]]:rounded-full! [&_[data-slot=switch-thumb]]:transition-[translate] motion-reduce:[&_[data-slot=switch-thumb]]:transition-none"
                   checked={showRomaji}
                   onCheckedChange={onRomajiChange}
                   aria-label="显示罗马音"
@@ -150,7 +150,7 @@ export function LyricsPanel({
               </Label>
               <Label className="text-white/80">
                 <Switch
-                  className="inset-ring inset-ring-white/60 data-checked:bg-white data-unchecked:bg-white/15 focus-visible:ring-white focus-visible:ring-offset-transparent [&_[data-slot=switch-thumb]]:bg-white [&_[data-slot=switch-thumb][data-checked]]:bg-[#343438]"
+                  className="inset-ring inset-ring-white/60 data-checked:bg-white/40 data-unchecked:bg-white/15 focus-visible:ring-white focus-visible:ring-offset-transparent [&_[data-slot=switch-thumb]]:bg-white [&_[data-slot=switch-thumb]]:scale-100! [&_[data-slot=switch-thumb]]:rounded-full! [&_[data-slot=switch-thumb]]:transition-[translate] motion-reduce:[&_[data-slot=switch-thumb]]:transition-none"
                   checked={showTranslation}
                   onCheckedChange={onTranslationChange}
                   aria-label="显示翻译"
@@ -161,7 +161,7 @@ export function LyricsPanel({
                 <span
                   title={
                     focused.words?.length
-                      ? '网易云官方提供的逐字时间轴。'
+                      ? '日文使用网易云官方逐字时间轴；翻译与罗马音按句起止时间显示近似进度，不代表真实字词演唱时间。'
                       : wordTiming === 'restricted'
                         ? '未获逐字歌词接口权限。按句起止时间线性显示近似进度，不代表真实字词演唱时间。'
                         : wordTiming === 'unavailable'
@@ -170,7 +170,9 @@ export function LyricsPanel({
                   }
                   className="text-xs max-sm:hidden"
                 >
-                  {focused.words?.length ? '逐字进度' : '句级近似进度'}
+                  {focused.words?.length
+                    ? '逐字进度 · 辅助行近似'
+                    : '句级近似进度'}
                 </span>
               )}
               <LyricsTranscriptDialog
