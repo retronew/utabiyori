@@ -198,10 +198,7 @@ export default function NeteasePractice({ visible }: { visible: boolean }) {
       />
       {selected && playback && <audio {...mediaProps} />}
       <PlayerPortal active={slot.active}>
-        <PlayerControls
-          {...playerProps}
-          emptyCover="/brand/netease-cloud-music.svg"
-        />
+        <PlayerControls {...playerProps} />
       </PlayerPortal>
     </>
   )

@@ -1,5 +1,6 @@
 import {
   Headphones,
+  Music2,
   Pause,
   Play,
   Repeat1,
@@ -45,7 +46,6 @@ export interface PlayerControlsProps {
   title?: string
   subtitle?: string
   cover?: string
-  emptyCover?: string
   current: number
   duration: number
   lower?: number
@@ -81,7 +81,6 @@ export function PlayerControls({
   title,
   subtitle,
   cover,
-  emptyCover,
   current,
   duration,
   lower = 0,
@@ -139,15 +138,13 @@ export function PlayerControls({
     >
       {!compact && (
         <div className="flex min-w-0 items-center gap-3 max-xl:hidden">
-          {!title && emptyCover ? (
-            <img
-              src={emptyCover}
-              alt=""
+          {!title ? (
+            <div
               aria-hidden
-              width={44}
-              height={44}
-              className="size-11 shrink-0"
-            />
+              className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-secondary text-muted-foreground inset-ring inset-ring-border"
+            >
+              <Music2 className="size-5" strokeWidth={1.5} />
+            </div>
           ) : (
             <Artwork src={cover} className="size-11 shrink-0 rounded-lg" />
           )}
