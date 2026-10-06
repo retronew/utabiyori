@@ -140,7 +140,10 @@ export default function NeteasePractice({ visible }: { visible: boolean }) {
             >
               <LyricsPanel
                 loading={lyricsLoading}
-                className={cn('h-full', fullscreen.active && 'rounded-none')}
+                className={cn(
+                  'h-full',
+                  fullscreen.active && 'rounded-none [clip-path:inset(0)]',
+                )}
                 visible={
                   visible &&
                   (fullscreen.active || desktop || mobileView === 'lyrics')
